@@ -1,6 +1,8 @@
 #include "database.h"
 #include <stdio.h>
 
+#include "csv.h"
+
 // // LOAD DATA LOW_PRIORITY LOCAL INFILE 'C:\\Users\\CLANCE\\Downloads\\AC_Test_2014_08_27_17_12_36_EDT.csv' REPLACE INTO TABLE `agilepc`.`csv_import` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"' LINES TERMINATED BY '\r\n' (`dummy1`, `dummy2`, `ts`, `val`);
 
 CDatabase::CDatabase() :
@@ -44,7 +46,8 @@ bool CDatabase::Connect(const char* pDatabase /*=NULL*/)
 		return false; // Initialization Error
 
 	unsigned long clientFlags = CLIENT_LOCAL_FILES // Permit "LOAD DATA LOCAL"
-	// | CLIENT_MULTI_STATEMENTS // ?? Include this?
+	| CLIENT_MULTI_STATEMENTS // ?? Include this?
+	| CLIENT_REMEMBER_OPTIONS
 	| CLIENT_MULTI_RESULTS; // For stored procedure calls
 
 	// Reference: http://dev.mysql.com/doc/refman/5.6/en/mysql-real-connect.html
@@ -77,7 +80,9 @@ void CDatabase::Disconnect()
 // TODO: Return row count
 int CDatabase::ImportCSV(const char* pFileName, const char* pTableName)
 {
-	std::string sqlText = "LOAD DATA LOW_PRIORITY LOCAL INFILE '";
+	return ImportCSV_Internal(pFileName, pTableName);
+
+	std::string sqlText = "LOAD DATA LOCAL INFILE '";
 	sqlText.append(pFileName);
 	sqlText.append("' REPLACE INTO TABLE `agilepc`.`");
 	sqlText.append(pTableName);
@@ -90,6 +95,44 @@ int CDatabase::ImportCSV(const char* pFileName, const char* pTableName)
 		// TODO: Handle/return specific error conditions
 	}
 	return 1;
+}
+
+// ** TEMP**
+// Parse the data file manually and INSERT each record
+int CDatabase::ImportCSV_Internal(const char* pFileName, const char* pTableName)
+{
+	io::CSVReader<3> in(pFileName);
+	in.read_header(io::ignore_extra_column, "vendor", "size", "speed");
+	std::string vendor; int size; double speed;
+	unsigned int rowCount = -1;
+	while (in.read_row(vendor, size, speed))
+	{
+		rowCount++;
+	}
+	return rowCount + 1;
+
+	//const int bufLen = 255;
+	//char buf[bufLen];
+
+	//// Open file
+	//int f = open(pFileName, O_RDONLY);
+	//if (-1 == f)
+	//{
+	//	fprintf(stderr, "Unable to open import file (%s)\r\n", pFileName);
+	//	return -1;
+	//}
+	//// While not EOF
+	//{
+	//	// Read a line
+	//	int readCount = read(f, buf, bufLen);
+
+	//	// Parse the line
+	//	// Insert the record
+	//}
+
+	//// Close file
+
+	//return -1;
 }
 
 // TODO: Error handling/return values

@@ -53,7 +53,7 @@ int CDataManager::LoadDataFile(const char* pFileName)
 	// Import contents to temp table
 	int rowCount = m_pDB->ImportCSV(pFileName, tempTable);
 	if (rowCount < 0)
-		fprintf(stderr, "Failed to import records from CSV file (%s) into table (%s). Error: %d", pFileName, tempTable, rowCount);
+		fprintf(stderr, "Failed to import records from CSV file (%s) into table (%s). Error: %d\r\n", pFileName, tempTable, rowCount);
 	else
 	{
 		// TODO: Transfer data to data table

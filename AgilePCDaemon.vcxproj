@@ -11,18 +11,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Application.h" />
-    <ClInclude Include="include\database.h" />
-    <ClInclude Include="include\DataManager.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\Application.cpp" />
+    <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\database.cpp" />
-    <ClCompile Include="src\DataManager.cpp" />
+    <ClCompile Include="src\datamanager.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Makefile" />
+    <ClInclude Include="src\application.h" />
+    <ClInclude Include="src\csv.h" />
+    <ClInclude Include="src\database.h" />
+    <ClInclude Include="src\datamanager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Makefile" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FAE2BC17-FFA1-4F33-9951-7BF25D21C844}</ProjectGuid>
@@ -66,7 +67,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Lib\boost_1_56_0;C:\Users\CLANCE\Documents\Personal\Development\Projects\Project Freedom\AgilePCDaemon\include;C:\Lib\mysql\connector-c-6.1.5-win32\include;C:\Lib\mysql\connector-c++-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Lib\boost_1_56_0;C:\Lib\mysql\connector-c-6.1.5-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -84,7 +85,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Lib\boost_1_56_0;C:\Users\CLANCE\Documents\Personal\Development\Projects\Project Freedom\AgilePCDaemon\include;C:\Lib\mysql\connector-c-6.1.5-win32\include;C:\Lib\mysql\connector-c++-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Lib\boost_1_56_0;C:\Lib\mysql\connector-c-6.1.5-win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
