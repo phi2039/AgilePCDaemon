@@ -124,6 +124,7 @@ int CApplication::Run()
 
 		getdir(loadPath, files);
 
+		printf("Monitoring upload directory: %s\r\n", loadPath);
 		// "/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv"
 		for (unsigned int i = 0; i < files.size(); i++)
 		{
