@@ -1,9 +1,9 @@
-#include "database.h"
+
+// Library Includes
 #include <stdio.h>
 
-#include "csv.h"
-
-// // LOAD DATA LOW_PRIORITY LOCAL INFILE 'C:\\Users\\CLANCE\\Downloads\\AC_Test_2014_08_27_17_12_36_EDT.csv' REPLACE INTO TABLE `agilepc`.`csv_import` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"' LINES TERMINATED BY '\r\n' (`dummy1`, `dummy2`, `ts`, `val`);
+// Local Includes
+#include "database.h"
 
 CDatabase::CDatabase() :
 	m_pMySQL(NULL),
@@ -54,7 +54,7 @@ bool CDatabase::Connect(const char* pDatabase /*=NULL*/)
 	// mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"agilepcd");
 	// TODO: Set reconnect flag to retry statements on faliure
 	// MYSQL_OPT_RECONNECT 
-	// TODO: Just use NULL MYSQL??
+	// TODO: Just use NULL MYSQL?? (Late Binding)
 	if (!mysql_real_connect(m_pMySQL, m_Host.c_str(), m_UserName.c_str(), m_Password.c_str(), pDatabase, m_Port, NULL, clientFlags))
 	{
 		printf("Failed to connect to database: Error: %s\n", mysql_error(m_pMySQL));
@@ -73,66 +73,6 @@ void CDatabase::Disconnect()
 	mysql_close(m_pMySQL);
 	m_pMySQL = NULL;
 	m_Database = "ANY";
-}
-
-// TODO: Error handling
-// TODO: Dynamic DB Name
-// TODO: Return row count
-int CDatabase::ImportCSV(const char* pFileName, const char* pTableName)
-{
-	return ImportCSV_Internal(pFileName, pTableName);
-
-	std::string sqlText = "LOAD DATA LOCAL INFILE '";
-	sqlText.append(pFileName);
-	sqlText.append("' REPLACE INTO TABLE `agilepc`.`");
-	sqlText.append(pTableName);
-	sqlText.append("` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '\"' LINES TERMINATED BY '\r\n' (`dummy1`, `dummy2`, `ts`, `val`)");
-	
-	if (0 != mysql_query(m_pMySQL, sqlText.c_str()))
-	{
-		printf("Failed to import CSV file(%s): Error: %s\n", pFileName, mysql_error(m_pMySQL));
-		return -1; // SQL error
-		// TODO: Handle/return specific error conditions
-	}
-	return 1;
-}
-
-// ** TEMP**
-// Parse the data file manually and INSERT each record
-int CDatabase::ImportCSV_Internal(const char* pFileName, const char* pTableName)
-{
-	io::CSVReader<3> in(pFileName);
-	in.read_header(io::ignore_extra_column, "vendor", "size", "speed");
-	std::string vendor; int size; double speed;
-	unsigned int rowCount = -1;
-	while (in.read_row(vendor, size, speed))
-	{
-		rowCount++;
-	}
-	return rowCount + 1;
-
-	//const int bufLen = 255;
-	//char buf[bufLen];
-
-	//// Open file
-	//int f = open(pFileName, O_RDONLY);
-	//if (-1 == f)
-	//{
-	//	fprintf(stderr, "Unable to open import file (%s)\r\n", pFileName);
-	//	return -1;
-	//}
-	//// While not EOF
-	//{
-	//	// Read a line
-	//	int readCount = read(f, buf, bufLen);
-
-	//	// Parse the line
-	//	// Insert the record
-	//}
-
-	//// Close file
-
-	//return -1;
 }
 
 // TODO: Error handling/return values

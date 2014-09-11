@@ -38,9 +38,6 @@
     <ClInclude Include="src\datamanager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\csv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Makefile" />

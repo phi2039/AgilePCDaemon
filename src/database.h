@@ -5,7 +5,6 @@
 
 #include <my_global.h>
 #include <my_sys.h>
-
 #include <mysql.h>
 
 class CDatabase
@@ -18,10 +17,8 @@ class CDatabase
 		bool Connect(const char* pDatabase = NULL);
         void Disconnect();
 
-		int ImportCSV(const char* pFileName, const char* pTableName);
 		bool ExecSQL(const char* pSQLText);
     protected:
-		int ImportCSV_Internal(const char* pFileName, const char* pTableName);
     private:
 		MYSQL* m_pMySQL;
         std::string m_Host;

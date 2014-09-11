@@ -1,5 +1,7 @@
 #include "application.h"
 
+// TODO: Implement standard logging/error code (PrintLog, PrintError, etc...) with debugging support
+
 using namespace std;
 
 //CFSDirectory::CFSDirectory(const char* pPath)

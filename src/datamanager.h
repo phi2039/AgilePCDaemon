@@ -11,6 +11,7 @@ public:
 	bool Initialize();
 	int LoadDataFile(const char* pFileName);
 protected:
+	int ImportCSV_Internal(const char* pFileName, const char* pTableName);
 	CDatabase* m_pDB;
 private:
 };
