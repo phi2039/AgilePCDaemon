@@ -95,6 +95,7 @@ CApplication::~CApplication()
 // TODO: Rationalize return values
 int CApplication::Run()
 {
+	printf("Agile Process Control Daemon: Initializing...\r\n");
 	// TODO: Create and initialize SettingsManager
 	
 	// Create and initialize DataManager
@@ -105,6 +106,7 @@ int CApplication::Run()
 		fprintf(stderr, "Failed to initialize DataManager\r\n");
 		return 1;
 	}
+	printf("\tDataManager - STARTED\r\n");
 
 	// TODO: Define IService interface
 	// TODO: Create and initialize TagService
@@ -124,7 +126,7 @@ int CApplication::Run()
 
 		getdir(loadPath, files);
 
-		printf("Monitoring upload directory: %s\r\n", loadPath);
+		printf("Monitoring upload directory: %s\r\n", loadPath.c_str());
 		// "/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv"
 		for (unsigned int i = 0; i < files.size(); i++)
 		{
