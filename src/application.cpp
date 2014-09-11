@@ -1,7 +1,22 @@
-#include "application.h"
 
 // TODO: Implement standard logging/error code (PrintLog, PrintError, etc...) with debugging support
 
+// Library Includes
+#include <sys/types.h>
+#include <errno.h>
+#include <vector>
+#include <string.h>
+#include <errno.h>
+
+// Local Includes
+#ifdef _WIN32
+#include "dirent.h"
+#else
+#include <dirent.h>
+
+#endif
+
+#include "application.h"
 using namespace std;
 
 //CFSDirectory::CFSDirectory(const char* pPath)
@@ -47,7 +62,21 @@ using namespace std;
 //}
 //
 
+int getdir(string dir, vector<string> &files)
+{
+	DIR *dp;
+	struct dirent *dirp;
+	if ((dp = opendir(dir.c_str())) == NULL) {
+		printf("Error (%d) opening %s\r\n",errno,dir.c_str());
+		return errno;
+	}
 
+	while ((dirp = readdir(dp)) != NULL) {
+		files.push_back(string(dirp->d_name));
+	}
+	closedir(dp);
+	return 0;
+}
 
 CApplication::CApplication() :
 	m_pDataManager(NULL),
@@ -86,15 +115,46 @@ int CApplication::Run()
 
 	// Main application loop
 
-	//while (!m_QuitFlag)
-	//{
-	// TODO: Read directory contents
+	while (!m_QuitFlag)
+	{
+		string loadPath = "ftp_dir/";
+		string tempPath = "/tmp/";
 
-	// TODO: For each file, move to tmp directory; load into db; delete;
-//		m_pDataManager->LoadDataFile("C:/Users/CLANCE/Downloads/AC_Test_2014_08_27_17_12_36_EDT.csv");
-	m_pDataManager->LoadDataFile("/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv");
-	//	Sleep(10000); // NOTE: This is Windows-only
-	//}
+		vector<string> files = vector<string>();
+
+		getdir(loadPath, files);
+
+		// "/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv"
+		for (unsigned int i = 0; i < files.size(); i++)
+		{
+			if (files[i].c_str()[0] != '.')
+			{
+				int err;
+				// Move to temp directory
+				err = rename((loadPath + files[i].c_str()).c_str(), (tempPath + files[i].c_str()).c_str());
+				if (err)
+				{
+					fprintf(stderr, "Unable to move input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
+				}
+//				else
+				{
+					// Import file
+					m_pDataManager->LoadDataFile((tempPath + files[i].c_str()).c_str());
+				}
+				// Delete input file
+				err = remove((tempPath + files[i].c_str()).c_str());
+				if (err)
+				{
+					fprintf(stderr, "Unable to delete input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
+				}
+			}
+		}
+#ifdef _WIN32
+		Sleep(10000); // NOTE: This is Windows-only
+#else
+		sleep(10);
+#endif
+	}
 
 	// TODO: Clean up resources
 	delete m_pDataManager;

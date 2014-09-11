@@ -4,7 +4,6 @@
 #include <locale>
 #include <math.h>
 #include <string.h>
-
 #include <time.h>
 
 #include "datamanager.h"
@@ -59,6 +58,7 @@ int CDataManager::LoadDataFile(const char* pFileName)
 	if (!m_pDB->ExecSQL(sqlText.c_str()))
 		return -1;
 
+	// TODO: Use temp table and validate...currently pushing directly into data table
 	// Import contents to temp table
 	int rowCount = ImportCSV_Internal(pFileName, tempTable);
 	if (rowCount < 0)
