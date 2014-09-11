@@ -20,6 +20,7 @@
     <ClInclude Include="src\application.h" />
     <ClInclude Include="src\database.h" />
     <ClInclude Include="src\datamanager.h" />
+    <ClInclude Include="src\dirent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Makefile" />
