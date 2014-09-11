@@ -29,8 +29,8 @@ bool CDataManager::Initialize()
 	m_pDB = new CDatabase();
 
 	// TODO: Read configuration values from config file
-//	if (!m_DB.Initialize("127.0.0.1", "agile", "agile"))
-	if (!m_pDB->Initialize("192.168.128.10", "agile", "agile"))
+	if (!m_pDB->Initialize("127.0.0.1", "agile", "agile"))
+//	if (!m_pDB->Initialize("192.168.128.10", "agile", "agile"))
 		return false;
 
 	// TODO: Dynamic connection management? Maybe the driver already does this...
