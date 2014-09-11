@@ -119,7 +119,8 @@ int CApplication::Run()
 
 	while (!m_QuitFlag)
 	{
-		string loadPath = "ftp_dir/";
+		//string loadPath = "ftp_dir/";
+		string loadPath = "/home/freedom_ftp/upload/";
 		string tempPath = "/tmp/";
 
 		vector<string> files = vector<string>();
