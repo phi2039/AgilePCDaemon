@@ -125,7 +125,11 @@ int CApplication::Run()
 
 		vector<string> files = vector<string>();
 
-		getdir(loadPath, files);
+		if (getdir(loadPath, files))
+		{
+			printf("Could not open upload directory: %s. Error: %s\r\n", loadPath.c_str(), strerror(errno));
+			return 1;
+		}
 
 		printf("Monitoring upload directory: %s\r\n", loadPath.c_str());
 		// "/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv"
