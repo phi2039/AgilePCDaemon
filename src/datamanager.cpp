@@ -88,18 +88,21 @@ struct data_point
 bool ParseDataPoint(const char* pText, data_point& point)
 {
 	// Parse the line
-	char fields[4][32];
+	// 276,09/01/14 16:10:00,8.890,0.006,4.54
+	// Line#,Date,"Current (S-FS-TRMSA 10564073:10518723-1), A, Jon's AC","Current (91-U30-CVIA 10564073:10549926-2), mA","Battery (U30 BATTERY 10564073:10564073-B), V"
+	char fields[5][48];
 	std::sscanf(pText, "%[^','],%[^','],%[^','],%s", fields[0], fields[1], fields[2], fields[3]);
 
 	// Fields:
-	//	0 - dummy
-	//	1 - dummy
-	//	2 - timestamp
-	//	3 - value
+	//	0 - line number (ignore)
+	//	1 - timestamp
+	//	2 - current (sensor)
+	//	3 - current (battery) (ignore)
+	//  4 - voltage (battery) (ignore)
 
 	// Parse the measurement timestamp
 	// 2014-08-26 17:15:00
-	point.meas_time.tm_year = atoi(strtok(fields[2], "-")) - 1900; // Year
+	point.meas_time.tm_year = atoi(strtok(fields[1], "-")) - 1900; // Year
 	point.meas_time.tm_mon = atoi(strtok(NULL, "-")); // Month
 	point.meas_time.tm_mday = atoi(strtok(NULL, " ")); // Day
 	point.meas_time.tm_hour = atoi(strtok(NULL, ":")); // Hour
@@ -107,7 +110,7 @@ bool ParseDataPoint(const char* pText, data_point& point)
 	point.meas_time.tm_sec = atoi(strtok(NULL, "\0")); // Second
 
 	// Parse the measurement value
-	point.meas_val = atof(fields[3]);
+	point.meas_val = atof(fields[2]);
 
 	return true;
 }
@@ -125,6 +128,9 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
 		fprintf(stderr, "Failed to open input file (%s)\r\n", pFileName);
 		return -1;
 	}
+
+	// Skip the first line of the file
+	std::getline(inFile, inLine);
 
 	// Read each line from the file and parse the entry
 	int recordCount = 0;
