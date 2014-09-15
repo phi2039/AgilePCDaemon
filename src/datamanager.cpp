@@ -91,7 +91,7 @@ bool ParseDataPoint(const char* pText, data_point& point)
 	// 276,09/01/14 16:10:00,8.890,0.006,4.54
 	// Line#,Date,"Current (S-FS-TRMSA 10564073:10518723-1), A, Jon's AC","Current (91-U30-CVIA 10564073:10549926-2), mA","Battery (U30 BATTERY 10564073:10564073-B), V"
 	char fields[5][48];
-	std::sscanf(pText, "%[^','],%[^','],%[^','],%s", fields[0], fields[1], fields[2], fields[3]);
+	std::sscanf(pText, "%[^','],%[^','],%[^','],%[^','],%s", fields[0], fields[1], fields[2], fields[3]);
 
 	// Fields:
 	//	0 - line number (ignore)
@@ -101,10 +101,10 @@ bool ParseDataPoint(const char* pText, data_point& point)
 	//  4 - voltage (battery) (ignore)
 
 	// Parse the measurement timestamp
-	// 2014-08-26 17:15:00
-	point.meas_time.tm_year = atoi(strtok(fields[1], "-")) - 1900; // Year
-	point.meas_time.tm_mon = atoi(strtok(NULL, "-")); // Month
-	point.meas_time.tm_mday = atoi(strtok(NULL, " ")); // Day
+	// Field 1: 09/06/14 17:15:00
+	point.meas_time.tm_mon = atoi(strtok(fields[1], "/")); // Month
+	point.meas_time.tm_mday = atoi(strtok(NULL, "/")); // Day
+	point.meas_time.tm_year = atoi(strtok(NULL, " ")) + 100; // Year
 	point.meas_time.tm_hour = atoi(strtok(NULL, ":")); // Hour
 	point.meas_time.tm_min = atoi(strtok(NULL, ":")); // Minute
 	point.meas_time.tm_sec = atoi(strtok(NULL, "\0")); // Second

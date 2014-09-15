@@ -117,12 +117,15 @@ int CApplication::Run()
 
 	// Main application loop
 
-	while (!m_QuitFlag)
-	{
 		//string loadPath = "ftp_dir/";
 		string loadPath = "/home/freedom_ftp/upload/";
 		string tempPath = "/tmp/";
+		string archivePath = "/home/freedom_ftp/archive/";
 
+		printf("Monitoring upload directory: %s\r\n", loadPath.c_str());
+
+	while (!m_QuitFlag)
+	{
 		vector<string> files = vector<string>();
 
 		if (getdir(loadPath, files))
@@ -131,7 +134,6 @@ int CApplication::Run()
 			return 1;
 		}
 
-		printf("Monitoring upload directory: %s\r\n", loadPath.c_str());
 		// "/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv"
 		for (unsigned int i = 0; i < files.size(); i++)
 		{
@@ -144,17 +146,24 @@ int CApplication::Run()
 				{
 					fprintf(stderr, "Unable to move input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
 				}
-//				else
+				else
 				{
 					// Import file
 					m_pDataManager->LoadDataFile((tempPath + files[i].c_str()).c_str());
 				}
-				// Delete input file
-				err = remove((tempPath + files[i].c_str()).c_str());
+				// TEMP: Archive input file
+				err = rename((tempPath + files[i].c_str()).c_str(), (archivePath + files[i].c_str()).c_str());
 				if (err)
 				{
-					fprintf(stderr, "Unable to delete input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
+					fprintf(stderr, "Unable to archive input file (%s). Error: %s\r\n", files[i].c_str(), strerror(errno));
 				}
+
+				// TODO: Delete input file
+				//err = remove((tempPath + files[i].c_str()).c_str());
+				//if (err)
+				//{
+				//	fprintf(stderr, "Unable to delete input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
+				//}
 			}
 		}
 #ifdef _WIN32
