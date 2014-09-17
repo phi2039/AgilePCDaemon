@@ -1,26 +1,34 @@
-INCDIR=include
-CXX=g++
-CFLAGS=-I$(INCDIR) `mysql_config --cflags`
-LFLAGS=`mysql_config --libs`
-OBJDIR=obj
-SRCDIR=src
-TARGET=bin/agilepc
+CC := g++ # This is the main compiler
+SRCDIR := src
+BUILDDIR := build
+TARGET := bin/runner
+ 
+SRCEXT := cpp
+SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+CFLAGS := -g # -Wall
+	
+LIB := -L lib -lmysqlclient
+INC := -I include
 
-LIBS=-lstdc++ 
+$(TARGET): $(OBJECTS)
+  @echo " Linking..."
+  @echo " $(CC) $^ -o $(TARGET) $(LIB)"; $(CC) $^ -o $(TARGET) $(LIB)
 
-_DEPS = application.h database.h datamanager.h
-DEPS = $(patsubst %,$(SRCDIR)/%,$(_DEPS))
-
-_OBJ = application.o database.o datamanager.o main.o 
-OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
-
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
-	$(CXX) -c -o $@ $< $(CFLAGS)
-
-$(TARGET): $(OBJ)
-	gcc -o $@ $^ $(LFLAGS) $(LIBS)
-
-.PHONY: clean
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
+  @mkdir -p $(BUILDDIR)
+  @echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
 
 clean:
-	rm -f $(OBJDIR)/*.o *~ core $(INCDIR)/*~
+  @echo " Cleaning..."; 
+  @echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
+
+# Tests
+tester:
+  $(CC) $(CFLAGS) test/tester.cpp $(INC) $(LIB) -o bin/tester
+
+# Spikes
+spike:
+  $(CC) $(CFLAGS) spikes/spike.cpp $(INC) $(LIB) -o bin/ticket
+
+.PHONY: clean

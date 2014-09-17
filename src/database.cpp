@@ -81,7 +81,7 @@ bool CDatabase::ExecSQL(const char* pSQLText)
 	if (0 != mysql_query(m_pMySQL, pSQLText))
 	{
 		printf("Failed to execute SQL(%s): Error: %s\n", pSQLText, mysql_error(m_pMySQL));
-		return false; // Connection error
+		return false; // Error
 		// TODO: Handle/return specific error conditions
 	}
 	return true;

@@ -151,10 +151,10 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
 		recordCount++;
 	}
 
-	printf("Read %d lines from input file (%s)\r\n", recordCount, pFileName);
+        printf("Read %d lines from input file (%s)\r\n", recordCount, pFileName);
 
 	// Close input file
 	inFile.close();
 
-	return recordCount;
+	return recordCount + 1;
 }
