@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include <mysql/my_global.h>
-#include <mysql/my_sys.h>
-#include <mysql/mysql.h>
+#include <my_global.h>
+#include <my_sys.h>
+#include <mysql.h>
 
 class CDatabase
 {
