@@ -151,7 +151,13 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
 		recordCount++;
 	}
 
-        printf("Read %d lines from input file (%s)\r\n", recordCount, pFileName);
+        char timeString[32];
+        time_t now_t;
+        time (&now_t);
+        tm *now;
+        now = localtime (&now_t);
+        strftime(timeString, sizeof(timeString), "%x %X", now);
+        printf("%s: Read %d lines from input file (%s)\r\n", timeString, recordCount, pFileName);
 
 	// Close input file
 	inFile.close();
