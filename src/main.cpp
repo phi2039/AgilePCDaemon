@@ -1,7 +1,8 @@
 #include "application.h"
+#include "daemon.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-	CApplication app;
-	return app.Run();
+    // TODO: Initialize, then daemonize, then run...
+    return daemon_main(argc, argv);
 }

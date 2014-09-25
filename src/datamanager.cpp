@@ -133,7 +133,8 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
 	std::getline(inFile, inLine);
 
 	// Read each line from the file and parse the entry
-	int recordCount = 0;
+	unsigned int recordCount = 0;
+        unsigned int errorCount = 0;
 	for (std::getline(inFile, inLine); inLine.length() > 0; std::getline(inFile, inLine))
 	{
 		data_point entry;
@@ -145,7 +146,11 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
 		std::string sqlText = "INSERT INTO `agilepc`.`data_point` (`measurement`,`device`, `measurement_time`, `measured_value`) VALUES (";
 		sqlText.append(values);
 		sqlText.append(")");
-		m_pDB->ExecSQL(sqlText.c_str());
+		if (!m_pDB->ExecSQL(sqlText.c_str()))
+                {
+                    // TODO: Do something with this record??
+                    errorCount++;
+                }
 
 		//printf("%s\r\n", entry.meas_time.tm_year + 1900, values);
 		recordCount++;
@@ -157,7 +162,7 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
         tm *now;
         now = localtime (&now_t);
         strftime(timeString, sizeof(timeString), "%x %X", now);
-        printf("%s: Read %d lines from input file (%s)\r\n", timeString, recordCount, pFileName);
+        printf("%s: Read %d lines from input file (%s) - %d errors\r\n", timeString, recordCount, pFileName, errorCount);
 
 	// Close input file
 	inFile.close();
