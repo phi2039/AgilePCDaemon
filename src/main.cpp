@@ -1,4 +1,5 @@
 #include "application.h"
+#include "logging.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -15,7 +16,6 @@ static void handle_signal(int signal, siginfo_t *info, void *unused)
         break;
     case SIGINT:
     case SIGTERM:
-        printf("Quitting...\r\n");
         g_Application.Quit();
         // TODO: How do we know when it's done...?
         break;
@@ -26,7 +26,7 @@ static void handle_signal(int signal, siginfo_t *info, void *unused)
 
 typedef struct sigaction sigaction_t; // Workaround for namespace conflict
 
-bool config_handler()
+bool config_handlers()
 {
     // Set up signal handlers
     sigaction_t action;
@@ -39,18 +39,17 @@ bool config_handler()
     sigaction(SIGHUP, &action, NULL); // Handle Hangup signal
 }
 
+int logwrite(const char* format, ...)
+{
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
-    // Install signal handler
-    // TODO: Should NOT need struct specifier here...
-    sigaction_t action; // Have to use 
-    action.sa_flags = SA_SIGINFO; // Use a handler for all signals, rather than the default action
-    sigemptyset(&action.sa_mask); // Don't block any signals
-    action.sa_sigaction = handle_signal;
+    apc_set_log_level(APC_LOG_LEVEL_INFO);
+    // TODO: Parse args
     
-    // TODO: Install handler for other signals
-    if (sigaction(SIGTERM, &action, NULL) == -1)
-        return 1;
+    config_handlers();
     
     // Initialize application
     printf("Agile Process Control Server: Initializing...\r\n");

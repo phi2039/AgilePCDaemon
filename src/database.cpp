@@ -1,9 +1,10 @@
-
 // Library Includes
 #include <stdio.h>
 
 // Local Includes
 #include "database.h"
+#include "logging.h"
+
 
 CDatabase::CDatabase() :
 m_pMySQL(NULL),
@@ -66,12 +67,12 @@ bool CDatabase::Connect(const char* pDatabase /*=NULL*/)
         // TODO: Is NULL pDatabase OK?
         if (mysql_real_connect(m_pMySQL, m_Host.c_str(), m_UserName.c_str(), m_Password.c_str(), pDatabase, m_Port, NULL, clientFlags))
         {
-            printf("Connected to MySQL server (database: %s) on %s:%d as %s\r\n", m_Database.c_str(), m_Host.c_str(), m_Port, m_UserName.c_str());
+            APC_LOG(APC_LOG_FLAG_INFO, "Connected to MySQL server (database: %s) on %s:%d as %s", m_Database.c_str(), m_Host.c_str(), m_Port, m_UserName.c_str());
             return true;
         }
     }
 
-    printf("Failed to connect to MySQL server (database: %s) on %s:%d as. Error: %s\n", m_Database.c_str(), m_Host.c_str(), m_Port, m_UserName.c_str(), mysql_error(m_pMySQL));
+    APC_LOG(APC_LOG_FLAG_ERROR, "Failed to connect to MySQL server (database: %s) on %s:%d as. Error: %s", m_Database.c_str(), m_Host.c_str(), m_Port, m_UserName.c_str(), mysql_error(m_pMySQL));
     // TODO: Handle/return specific error conditions?
     mysql_close(m_pMySQL);
     m_pMySQL = NULL;
@@ -105,7 +106,7 @@ bool CDatabase::SetMySQLOption(mysql_option opt, const void* val)
 {
     if (0 != mysql_options(m_pMySQL, opt, val))
     {
-        printf("Failed to set MySQL library option (%d). Error: %s\r\n", opt, mysql_error(m_pMySQL));
+        APC_LOG(APC_LOG_FLAG_ERROR, "Failed to set MySQL library option (%d). Error: %s", opt, mysql_error(m_pMySQL));
         return false;
     }
     return true;
