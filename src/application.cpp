@@ -92,90 +92,100 @@ CApplication::~CApplication()
 		delete m_pDataManager;
 }
 
-// TODO: Rationalize return values
+bool CApplication::Initialize()
+{
+     // TODO: Create and initialize SettingsManager
+
+    // Create and initialize DataManager
+    m_pDataManager = new CDataManager();
+
+    if (!m_pDataManager->Initialize())
+    {
+        fprintf(stderr, "Failed to initialize DataManager\r\n");
+        return false;
+    }
+    printf("DataManager Started...\r\n");
+
+    // TEMP: Check that upload directory exists...
+    if (access("/home/freedom_ftp/upload/", R_OK))
+    {
+        printf("Could not open upload directory. Error: %s\r\n", strerror(errno));
+        return false;
+    }    
+    
+    // TODO: Define IService interface
+    // TODO: Create and initialize TagService
+
+    // TODO: Create and initialize TcpService
+
+    // TODO: Create and initialize FileMonitorService
+
+    return true;
+}
+
 int CApplication::Run()
 {
-	printf("Agile Process Control Daemon: Initializing...\r\n");
-	// TODO: Create and initialize SettingsManager
-	
-	// Create and initialize DataManager
-	m_pDataManager = new CDataManager();
+    // Main application loop
 
-	if (!m_pDataManager->Initialize())
-	{
-		fprintf(stderr, "Failed to initialize DataManager\r\n");
-		return 1;
-	}
-	printf("\tDataManager - STARTED\r\n");
+    //string loadPath = "ftp_dir/";
+    string loadPath = "/home/freedom_ftp/upload/";
+    string tempPath = "/tmp/";
+    string archivePath = "/home/freedom_ftp/archive/";
 
-	// TODO: Define IService interface
-	// TODO: Create and initialize TagService
+    printf("Monitoring upload directory: %s\r\n", loadPath.c_str());
 
-	// TODO: Create and initialize TcpService
+    while (!m_QuitFlag)
+    {
+        vector<string> files = vector<string>();
 
-	// TODO: Create and initialize FileMonitorService
+        if (getdir(loadPath, files))
+        {
+            printf("Could not open upload directory: %s. Error: %s\r\n", loadPath.c_str(), strerror(errno));
+            return 1;
+        }
 
-	// Main application loop
+        // "/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv"
+        for (unsigned int i = 0; i < files.size(); i++)
+        {
+            if (files[i].c_str()[0] != '.')
+            {
+                int err;
+                // Move to temp directory
+                err = rename((loadPath + files[i].c_str()).c_str(), (tempPath + files[i].c_str()).c_str());
+                if (err)
+                {
+                    fprintf(stderr, "Unable to move input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
+                }
+                else
+                {
+                    // Import file
+                    m_pDataManager->LoadDataFile((tempPath + files[i].c_str()).c_str());
+                }
+                // TEMP: Archive input file
+                err = rename((tempPath + files[i].c_str()).c_str(), (archivePath + files[i].c_str()).c_str());
+                if (err)
+                {
+                    fprintf(stderr, "Unable to archive input file (%s). Error: %s\r\n", files[i].c_str(), strerror(errno));
+                }
 
-		//string loadPath = "ftp_dir/";
-		string loadPath = "/home/freedom_ftp/upload/";
-		string tempPath = "/tmp/";
-		string archivePath = "/home/freedom_ftp/archive/";
+                // TODO: Delete input file
+                //err = remove((tempPath + files[i].c_str()).c_str());
+                //if (err)
+                //{
+                //	fprintf(stderr, "Unable to delete input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
+                //}
+            }
+        }
+    }
+    
+    // TODO: Clean up resources
+    delete m_pDataManager;
+    m_pDataManager = NULL;
 
-		printf("Monitoring upload directory: %s\r\n", loadPath.c_str());
+    return 0; // No Error
+}
 
-	while (!m_QuitFlag)
-	{
-		vector<string> files = vector<string>();
-
-		if (getdir(loadPath, files))
-		{
-			printf("Could not open upload directory: %s. Error: %s\r\n", loadPath.c_str(), strerror(errno));
-			return 1;
-		}
-
-		// "/mnt/hgfs/AgilePCDaemon/AC_Test_2014_08_27_17_12_36_EDT.csv"
-		for (unsigned int i = 0; i < files.size(); i++)
-		{
-			if (files[i].c_str()[0] != '.')
-			{
-				int err;
-				// Move to temp directory
-				err = rename((loadPath + files[i].c_str()).c_str(), (tempPath + files[i].c_str()).c_str());
-				if (err)
-				{
-					fprintf(stderr, "Unable to move input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
-				}
-				else
-				{
-					// Import file
-					m_pDataManager->LoadDataFile((tempPath + files[i].c_str()).c_str());
-				}
-				// TEMP: Archive input file
-				err = rename((tempPath + files[i].c_str()).c_str(), (archivePath + files[i].c_str()).c_str());
-				if (err)
-				{
-					fprintf(stderr, "Unable to archive input file (%s). Error: %s\r\n", files[i].c_str(), strerror(errno));
-				}
-
-				// TODO: Delete input file
-				//err = remove((tempPath + files[i].c_str()).c_str());
-				//if (err)
-				//{
-				//	fprintf(stderr, "Unable to delete input file (%s). Error: %s\r\n", (loadPath + files[i].c_str()).c_str(), strerror(errno));
-				//}
-			}
-		}
-#ifdef _WIN32
-		Sleep(10000); // NOTE: This is Windows-only
-#else
-		sleep(10);
-#endif
-	}
-
-	// TODO: Clean up resources
-	delete m_pDataManager;
-	m_pDataManager = NULL;
-
-	return 0; // No Error
+void CApplication::Quit()
+{
+    m_QuitFlag = true;
 }

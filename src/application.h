@@ -21,8 +21,10 @@ class CApplication
 {
 public:
 	CApplication();
+        bool Initialize();
 	virtual ~CApplication();
 	int Run();
+        void Quit();
 protected:
 	CDataManager* m_pDataManager;
 	bool m_QuitFlag;
