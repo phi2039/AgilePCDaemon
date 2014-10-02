@@ -46,7 +46,6 @@ int logwrite(const char* format, ...)
 
 int main(int argc, char *argv[])
 {
-    apc_set_log_level(APC_LOG_LEVEL_INFO);
     // TODO: Parse args
     
     config_handlers();

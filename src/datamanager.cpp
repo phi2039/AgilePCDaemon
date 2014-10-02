@@ -32,7 +32,6 @@ bool CDataManager::Initialize()
 
     // TODO: Read configuration values from config file
     if (!m_pDB->Initialize("127.0.0.1", "agile", "agile"))
-        //	if (!m_pDB->Initialize("192.168.128.10", "agile", "agile"))
         return false;
 
     // TODO: Dynamic connection management? Maybe the driver already does this...
@@ -65,7 +64,7 @@ int CDataManager::LoadDataFile(const char* pFileName)
     // Import contents to temp table
     int rowCount = ImportCSV_Internal(pFileName, tempTable);
     if (rowCount < 0)
-        APC_LOG(APC_LOG_FLAG_ERROR, "Failed to import records from CSV file (%s) into table (%s). Error: %d", pFileName, tempTable, rowCount);
+        CLog::Write(APC_LOG_FLAG_ERROR, "DataManager", "Failed to import records from CSV file (%s) into table (%s). Error: %d", pFileName, tempTable, rowCount);
     else
     {
         // TODO: Transfer data to data table
@@ -130,7 +129,7 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
     inFile.open(pFileName, std::fstream::in);
     if (!inFile.is_open())
     {
-        APC_LOG(APC_LOG_FLAG_ERROR, "Failed to open input file (%s)", pFileName);
+        CLog::Write(APC_LOG_FLAG_ERROR, "DataManager", "Failed to open input file (%s)", pFileName);
         return -1;
     }
 
@@ -157,7 +156,7 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
             errorCount++;
         }
 
-        APC_LOG(APC_LOG_FLAG_DEBUG, "%s", entry.meas_time.tm_year + 1900, values);
+        CLog::Write(APC_LOG_FLAG_DEBUG, "DataManager", "%s", entry.meas_time.tm_year + 1900, values);
         recordCount++;
     }
 
@@ -167,7 +166,7 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
     tm *now;
     now = localtime(&now_t);
     strftime(timeString, sizeof (timeString), "%x %X", now);
-    APC_LOG(APC_LOG_FLAG_INFO, "%s: Read %d lines from input file (%s) - %d errors", timeString, recordCount, pFileName, errorCount);
+    CLog::Write(APC_LOG_FLAG_INFO, "DataManager", "%s: Read %d lines from input file (%s) - %d errors", timeString, recordCount, pFileName, errorCount);
 
     // Close input file
     inFile.close();

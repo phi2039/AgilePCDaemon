@@ -3,19 +3,7 @@
 
 #include "datamanager.h"
 
-//#include <vector>
 #include <string>
-
-//class CFSDirectory
-//{
-//public:
-//	CFSDirectory(const char* pPath);
-//	virtual ~CFSDirectory();
-//	std::vector<std::string> List(const char* pExtension = NULL);
-//protected:
-//	std::string m_Path;
-//private:
-//};
 
 class CApplication
 {
