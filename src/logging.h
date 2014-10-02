@@ -6,6 +6,8 @@
 #include <string>
 #include <stdarg.h>
 
+#include <syslog.h>
+
 #include "sync.h"
 
 // Log Level Definitions
@@ -110,6 +112,21 @@ public:
     virtual void WriteV(int logLevel, const char* facility, const char* format, va_list args);
 protected:
 private:
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// Syslog-based implementation of ILog interface
+class CSysLog : public CLogBase
+{
+public:
+    CSysLog(const char* ident);
+    virtual ~CSysLog();
+    virtual bool Open();
+    virtual void WriteV(int logLevel, const char* facility, const char* format, va_list args);
+    virtual void Close();
+protected:
+private:
+    string m_Ident;
 };
 
 #endif	/* LOGGING_H */

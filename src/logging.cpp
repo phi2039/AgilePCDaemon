@@ -18,7 +18,10 @@ void CLog::SetInterface(ILog* pLog)
         delete m_pInterface;
     }
     m_pInterface = pLog;
-    m_IsOpen = pLog->Open();
+    if (pLog)
+        m_IsOpen = pLog->Open();
+    else
+        m_IsOpen = false;
 }
 
 bool CLog::Open()
@@ -97,12 +100,15 @@ bool CLogBase::Open()
 
 void CLogBase::Write(int logLevel, const char* facility, const char* format, ...)
 {
-    CMutexLock lock(m_WriteMutex); // Block changes or other callers
+    if (m_Mask && logLevel)
+    {
+        CMutexLock lock(m_WriteMutex); // Block changes or other callers
 
-    va_list args;
-    va_start(args, format);
-    WriteV(logLevel, facility, format, args);
-    va_end(args);
+        va_list args;
+        va_start(args, format);
+        WriteV(logLevel, facility, format, args);
+        va_end(args);
+    }
 }
 
 void CLogBase::Close()
@@ -124,7 +130,6 @@ CFileLog::CFileLog(const char* path) :
 
 CFileLog::~CFileLog()
 {
-    // TODO: Do this in the base class
     Close(); // Make sure we clean up
 }
 
@@ -171,4 +176,43 @@ void CConsoleLog::WriteV(int logLevel, const char* facility, const char* format,
     printf("%s::", facility);
     vprintf(format, args);
     printf("\n");    
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// Syslog-based implementation of ILog interface
+
+CSysLog::CSysLog(const char* ident)
+{
+    if (ident)
+        m_Ident = ident;
+    else
+        ident = "";
+}
+
+CSysLog::~CSysLog()
+{
+    Close(); // Make sure we clean up
+}
+
+bool CSysLog::Open()
+{
+    openlog((m_Ident.length() == 0) ? NULL : m_Ident.c_str(), LOG_PID | LOG_CONS, LOG_DAEMON);  
+}
+
+void CSysLog::WriteV(int logLevel, const char* facility, const char* format, va_list args)
+{
+    // TODO: Do this more efficiently
+    string newFormat;
+    if (facility)
+    {
+        newFormat = facility;
+        newFormat.append("::");
+    }
+    newFormat.append(format);
+    vsyslog(LOG_INFO, newFormat.c_str(), args);
+}
+
+void CSysLog::Close()
+{
+    closelog();
 }

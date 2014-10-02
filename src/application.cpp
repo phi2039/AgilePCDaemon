@@ -9,6 +9,7 @@
 
 #include "application.h"
 #include "logging.h"
+#include "config.h"
 
 using namespace std;
 
@@ -43,15 +44,19 @@ CApplication::~CApplication()
 
 bool CApplication::Initialize()
 {
+    // Initialize logging
     // TODO: Detect or get passed daemon state. If we have a console, use it...
 //    CLog::SetInterface(new CFileLog("/var/log/agilepcd"));
     CLog::SetInterface(new CConsoleLog());
+//    CLog::SetInterface(new CSysLog("agilepcd"));
     CLog::SetMask(APC_LOG_LEVEL_INFO);
-    
     CLog::Write(APC_LOG_FLAG_INFO, "Application", "Log Opened");
 
-    // TODO: Create and initialize SettingsManager
-
+    // Initialize the configuration manager
+    string configFile = "";
+    CConfig::SetInterface(new CFileConfig(configFile.c_str()));
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Loaded configuration from %s --- %s", configFile.c_str());
+   
     // Create and initialize DataManager
     m_pDataManager = new CDataManager();
 
