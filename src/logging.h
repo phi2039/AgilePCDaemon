@@ -6,6 +6,8 @@
 #include <string>
 #include <stdarg.h>
 
+#include "sync.h"
+
 // Log Level Definitions
 ///////////////////////////////////////////////////////
 enum 
@@ -72,10 +74,12 @@ public:
     CLogBase();
     virtual ~CLogBase();
     virtual bool Open();
+    virtual void Write(int logLevel, const char* facility, const char* format, ...);
     virtual void Close();
     virtual void SetMask(int level);
     virtual int GetMask();
 protected:
+    pthread_mutex_t m_WriteMutex;
     int m_Mask;
 private:
 };
@@ -88,7 +92,6 @@ public:
     CFileLog(const char* path);
     virtual ~CFileLog();
     virtual bool Open();
-    virtual void Write(int logLevel, const char* facility, const char* format, ...);
     virtual void WriteV(int logLevel, const char* facility, const char* format, va_list args);
     virtual void Close();
 protected:
@@ -104,7 +107,6 @@ class CConsoleLog : public CLogBase
 public:
     CConsoleLog();
     virtual ~CConsoleLog();
-    virtual void Write(int logLevel, const char* facility, const char* format, ...);
     virtual void WriteV(int logLevel, const char* facility, const char* format, va_list args);
 protected:
 private:

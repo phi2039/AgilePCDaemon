@@ -66,18 +66,19 @@ bool CLog::IsOpen()
 CLogBase::CLogBase() :
     m_Mask(0)
 {
-    
+    pthread_mutex_init(&m_WriteMutex, NULL); // Initialize the synchronization object
 }
 
 CLogBase::~CLogBase()
 {
-    // TODO: Is this calling the method I think it is...?
-    // TODO: Figure out how to properly call the inheriting class' method..
-    // Close();)
+    pthread_mutex_destroy(&m_WriteMutex); // Clean-up the synchronization object
 }
 
 void CLogBase::SetMask(int mask)
 {
+    // TODO: Make this atomic? Do we really care at that level of granularity?
+    //     Probably only if we are using this to change the level frequently
+    //     rather than just at start-up...
     m_Mask = mask;
 }
 
@@ -86,14 +87,27 @@ int CLogBase::GetMask()
     return m_Mask;
 }
 
+// Default behaviors
+//////////////////////////////////
 bool CLogBase::Open()
 {
+    // TODO: Sync open?
     return true;
+}
+
+void CLogBase::Write(int logLevel, const char* facility, const char* format, ...)
+{
+    CMutexLock lock(m_WriteMutex); // Block changes or other callers
+
+    va_list args;
+    va_start(args, format);
+    WriteV(logLevel, facility, format, args);
+    va_end(args);
 }
 
 void CLogBase::Close()
 {
-    
+    // TODO: Sync close?
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,14 +137,6 @@ bool CFileLog::Open()
     return (m_pFile != NULL);
 }
 
-void CFileLog::Write(int logLevel, const char* facility, const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    WriteV(logLevel, facility, format, args);
-    va_end(args);
-}
-
 void CFileLog::WriteV(int logLevel, const char* facility, const char* format, va_list args)
 {
     if (!m_pFile)
@@ -158,14 +164,6 @@ CConsoleLog::CConsoleLog()
 CConsoleLog::~CConsoleLog()
 {
 
-}
-
-void CConsoleLog::Write(int logLevel, const char* facility, const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    WriteV(logLevel, facility, format, args);
-    va_end(args);
 }
 
 void CConsoleLog::WriteV(int logLevel, const char* facility, const char* format, va_list args)

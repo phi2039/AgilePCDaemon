@@ -7,7 +7,6 @@
 #include <errno.h>
 #include <dirent.h>
 
-// TODO: Implement standard logging/error code (PrintLog, PrintError, etc...) with debugging support
 #include "application.h"
 #include "logging.h"
 

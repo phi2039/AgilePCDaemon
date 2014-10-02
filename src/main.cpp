@@ -51,13 +51,13 @@ int main(int argc, char *argv[])
     config_handlers();
     
     // Initialize application
-    printf("Agile Process Control Server: Initializing...\r\n");
+    printf("Agile Process Control Server: Initializing...\n");
     if (!g_Application.Initialize())
     {
         printf("Initialization Failed.\r\n");
         exit(EXIT_FAILURE);
     }
-    printf("Initialized\r\n");
+    printf("Agile Process Control Server: Initialized\n");
     
 //    printf("\tDaemonizing...\r\n");
 //    if (daemon(0,0)) // TODO: Use custom daemon code for portability??
