@@ -24,20 +24,28 @@ void CLog::SetInterface(ILog* pLog)
         m_IsOpen = false;
 }
 
+ILog* CLog::GetInterface()
+{
+    return m_pInterface;
+}
+
 bool CLog::Open()
 {
     return (m_pInterface != NULL) ? m_pInterface->Open() : false;
 }
 
-// TODO: Speed up detection of mask match - don't waste time on unlogged messages
+// TODO: Improve detection of mask match - don't waste time on unlogged messages
 void CLog::Write(int logLevel, const char* facility, const char* format, ...)
 {
     if (m_pInterface != NULL) 
     {    
-        va_list args;
-        va_start(args, format);
-        m_pInterface->WriteV(logLevel, facility, format, args);
-        va_end(args);
+        if (m_pInterface->GetMask() & logLevel)
+        {
+            va_list args;
+            va_start(args, format);
+            m_pInterface->WriteV(logLevel, facility, format, args);
+            va_end(args);
+        }
     }
 }
 
@@ -66,6 +74,7 @@ bool CLog::IsOpen()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Base implementation of ILog interface
+// TODO: Global timestamp handling
 CLogBase::CLogBase() :
     m_Mask(0)
 {
@@ -100,7 +109,8 @@ bool CLogBase::Open()
 
 void CLogBase::Write(int logLevel, const char* facility, const char* format, ...)
 {
-    if (m_Mask && logLevel)
+    // TODO: This never gets called...find a way around this...
+    if (m_Mask & logLevel)
     {
         CMutexLock lock(m_WriteMutex); // Block changes or other callers
 

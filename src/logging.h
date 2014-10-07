@@ -35,6 +35,7 @@ using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Logging interface
+// TODO: Hide WriteV method somehow...
 class ILog
 {
 public:
@@ -55,6 +56,7 @@ class CLog
 {
 public:
     static void SetInterface(ILog* pLog);
+    static ILog* GetInterface();
     static bool Open();
     static void Write(int logLevel, const char* facility, const char* format, ...);
     static void Close();

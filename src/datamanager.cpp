@@ -8,11 +8,12 @@
 
 #include "datamanager.h"
 #include "logging.h"
+#include "config.h"
 
-// TODO: Pass IConfigManager interface
+using namespace std;
 
 CDataManager::CDataManager() :
-m_pDB(NULL)
+    m_pDB(NULL)
 {
 
 }
@@ -30,15 +31,28 @@ bool CDataManager::Initialize()
 {
     m_pDB = new CDatabase();
 
-    // TODO: Read configuration values from config file
-    if (!m_pDB->Initialize("127.0.0.1", "agile", "agile"))
-        return false;
+    string host = "127.0.0.1";
+    string user = "agile";
+    string password = "agile";
+    
+    // Read configuration values from configuration manager
+    // CConfig will not modify values (keep default) if no value is found
+    CConfig::GetOpt("dm_hostname", host);
+    CConfig::GetOpt("dm_user", user);
+    CConfig::GetOpt("dm_password", password);   
 
+    if (!m_pDB->Initialize(host.c_str(), user.c_str(), password.c_str()))
+    {
+        return false;
+    }
+    
     // TODO: Dynamic connection management? Maybe the driver already does this...
 
     if (!m_pDB->Connect())
+    {
         return false;
-
+    }
+    
     // TODO: Cleanup any leftovers from the last instance...
 
     return true;
@@ -156,7 +170,7 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
             errorCount++;
         }
 
-        CLog::Write(APC_LOG_FLAG_DEBUG, "DataManager", "%s", entry.meas_time.tm_year + 1900, values);
+        CLog::Write(APC_LOG_FLAG_DEBUG, "DataManager", "%s", values);
         recordCount++;
     }
 
@@ -171,5 +185,5 @@ int CDataManager::ImportCSV_Internal(const char* pFileName, const char* pTableNa
     // Close input file
     inFile.close();
 
-    return recordCount + 1;
+    return recordCount;
 }

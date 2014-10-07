@@ -1,9 +1,9 @@
 #include "application.h"
-#include "logging.h"
 
 #include <unistd.h>
 #include <signal.h>
 
+// Global application instance
 CApplication g_Application;
 
 // Process signal handler
@@ -12,7 +12,7 @@ static void handle_signal(int signal, siginfo_t *info, void *unused)
     switch (signal)
     {
     case SIGHUP:
-        // TODO: Reload configuration file
+        g_Application.ReloadConfig();
         break;
     case SIGINT:
     case SIGTERM:
@@ -24,7 +24,8 @@ static void handle_signal(int signal, siginfo_t *info, void *unused)
     };
 }
 
-typedef struct sigaction sigaction_t; // Workaround for namespace conflict
+// Workaround for namespace conflict (function and type with the same name)
+typedef struct sigaction sigaction_t;
 
 bool config_handlers()
 {
@@ -46,27 +47,34 @@ int logwrite(const char* format, ...)
 
 int main(int argc, char *argv[])
 {
+    bool daemonize = false;
+    
     // TODO: Parse args
     
+    // Set-up signal handlers (for daemon control)
     config_handlers();
     
     // Initialize application
     printf("Agile Process Control Server: Initializing...\n");
-    if (!g_Application.Initialize())
+
+    if (!g_Application.Initialize(daemonize))
     {
         printf("Initialization Failed.\r\n");
         exit(EXIT_FAILURE);
     }
     printf("Agile Process Control Server: Initialized\n");
     
-//    printf("\tDaemonizing...\r\n");
-//    if (daemon(0,0)) // TODO: Use custom daemon code for portability??
-//    {
-//        printf("FAILED\r\n");
-//        exit(EXIT_FAILURE);
-//    }
-    
-    // TODO: Write PID to file
+    if (daemonize)
+    {
+        printf("Agile Process Control Server: Daemonizing...");
+        if (daemon(0,0)) // Failed to detach process
+        {
+            printf("FAILED\r\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // TODO: Write PID to file (for daemon control)
     
     // Run the application
     return g_Application.Run(); 
