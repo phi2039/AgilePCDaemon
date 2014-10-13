@@ -29,13 +29,14 @@ private:
 class CApplication 
 {
 public:
-    CApplication(bool daemon);
+    CApplication();
     virtual ~CApplication();
-    bool Initialize();
+    bool Initialize(bool daemon);
     void ReloadConfig();
     int Run();
     void Quit();
 protected:
+    void Close();
     CDataManager* m_pDataManager;
     bool m_QuitFlag;
     // TEMP:

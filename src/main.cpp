@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <stdio.h>
 
 // Global application instance
 CApplication g_Application;
@@ -40,16 +41,18 @@ bool config_handlers()
     sigaction(SIGHUP, &action, NULL); // Handle Hangup signal
 }
 
-int logwrite(const char* format, ...)
-{
-    return 0;
-}
-
 int main(int argc, char *argv[])
 {
-    bool daemonize = false;
-    
     // TODO: Parse args
+    // - Config File
+    // - Logging
+    // - Daemon
+    
+    // TODO: See if an instance is already running
+    // - PID File
+    // - Process List?
+    
+    bool daemonize = false;
     
     // Set-up signal handlers (for daemon control)
     config_handlers();
@@ -74,8 +77,27 @@ int main(int argc, char *argv[])
         }
     }
 
-    // TODO: Write PID to file (for daemon control)
-    
+    // Write PID to file (for daemon control)
+    const char* pidFileName = "/var/run/agilepcd.pid";
+    FILE* pidFile = fopen(pidFileName, "w");
+    if (!pidFile)
+    {
+        // Probably need to open before daemonizing to make sure we have it...
+        // But daemonizing will close it, so...
+        // TODO: How do we want to handle this...?
+    }
+    else
+    {
+        pid_t pid = getpid(); // Get PID
+        fprintf(pidFile,"%d\n", pid);
+        fclose(pidFile);
+    }
     // Run the application
-    return g_Application.Run(); 
+    int result = g_Application.Run(); 
+    
+    printf("Agile Process Control Server: Exiting...");
+    // Remove the PID file (or at least try to...)
+    remove(pidFileName);
+    
+    return result;
 }

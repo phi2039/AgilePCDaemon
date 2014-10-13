@@ -103,9 +103,9 @@ protected:
     void RemoveComment(string& line);
     bool OnlyWhitespace(const string& line);
     bool ValidLine(const string& line);
-    void ExtractKey(string& key, size_t const &sepPos, const string& line);
-    void ExtractValue(string& value, size_t const &sepPos, const string& line);
-    bool ParseLine(const string& line, size_t lineNo);
+    void ExtractKey(string& key, size_t sepPos, const string& line);
+    void ExtractValue(string& value, size_t sepPos, const string& line);
+    void ParseLine(const string& line, size_t lineNo);
     
 private:
     string m_Path;

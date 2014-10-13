@@ -100,7 +100,8 @@ int CUploadMonitor::GetDirectory(string dir, vector<string> &files)
     return 0;
 }
 
-//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Main Application Class
 CApplication::CApplication() :
     m_pDataManager(NULL),
     m_pUploads(NULL),
@@ -122,8 +123,7 @@ CApplication::~CApplication()
 
 bool CApplication::Initialize(bool daemon)
 {
-    // TODO: Parse command-line arguments
-    // - Daemon or console
+    // TODO: Pass command-line arguments (config overrides)
     // - Logging type
     // - Log level
     // - Configuration file
@@ -163,17 +163,17 @@ bool CApplication::Initialize(bool daemon)
     // TODO: Read archive flag
     if (access(loadPath.c_str(), R_OK))
     {
-        CLog::Write(APC_LOG_FLAG_ERROR, "Application", "Could not access upload directory (%s). Error: %s", loadPath.c_str() strerror(errno));
+        CLog::Write(APC_LOG_FLAG_ERROR, "Application", "Could not access upload directory (%s). Error: %s", loadPath.c_str(), strerror(errno));
         return false;
     }
     if (access(archivePath.c_str(), R_OK))
     {
-        CLog::Write(APC_LOG_FLAG_ERROR, "Application", "Could not access archive directory (%s). Error: %s", archivePath.c_str() strerror(errno));
+        CLog::Write(APC_LOG_FLAG_ERROR, "Application", "Could not access archive directory (%s). Error: %s", archivePath.c_str(), strerror(errno));
         return false;
     }
     if (access(tempPath.c_str(), R_OK))
     {
-        CLog::Write(APC_LOG_FLAG_ERROR, "Application", "Could not access temp directory (%s). Error: %s", tempPath.c_str() strerror(errno));
+        CLog::Write(APC_LOG_FLAG_ERROR, "Application", "Could not access temp directory (%s). Error: %s", tempPath.c_str(), strerror(errno));
         return false;
     }    
     m_pUploads = new CUploadMonitor(loadPath, archivePath, tempPath, m_pDataManager);
@@ -199,15 +199,33 @@ int CApplication::Run()
             return 1; // This is all we do right now...no point hanging around...
         sleep(1); // Only poll once a second or so...
     }
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Exiting...");
 
-    // TODO: Clean up resources
-    delete m_pDataManager;
-    m_pDataManager = NULL;
+    // Clean up resources
+    Close();
     
-    delete m_pUploads;
-    m_pUploads = NULL;
-
     return 0; // No Error
+}
+
+void CApplication::Close()
+{
+    if (m_pDataManager)
+    {
+        delete m_pDataManager;
+        m_pDataManager = NULL;
+        CLog::Write(APC_LOG_FLAG_INFO, "Application", "DataManager Stopped");
+    }
+    
+    if (m_pUploads)
+    {
+        delete m_pUploads;
+        m_pUploads = NULL;
+        CLog::Write(APC_LOG_FLAG_INFO, "Application", "No longer monitoring upload directory");
+    }
+    
+    // Last but not least
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Closing Log...");
+    CLog::Close();
 }
 
 void CApplication::Quit()

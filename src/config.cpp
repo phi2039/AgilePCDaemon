@@ -66,6 +66,7 @@ bool CConfigBase::SetOpt(const string& name, string& value)
     {
         m_Options.insert(make_pair<string,string>(name, value));
     }
+    CLog::Write(APC_LOG_FLAG_INFO, "Config", "Option %s set to %s", name.c_str(), value.c_str());
     return true;
 }
 
@@ -120,7 +121,6 @@ bool CFileConfig::Load()
     CLog::Write(APC_LOG_FLAG_INFO, "Config", "Parsed configuration file (%s)", m_Path.c_str());
 
     return true;
-
 }
 
 bool CFileConfig::Save()
@@ -135,7 +135,7 @@ void CFileConfig::RemoveComment(string& line)
     line.erase(line.find(';'));
 }
 
-bool CFileConfig::OnlyWhitespace(string& line)
+bool CFileConfig::OnlyWhitespace(const string& line)
 {
     return (line.find_first_not_of(' ') == line.npos);
 }
@@ -168,7 +168,7 @@ void CFileConfig::ExtractValue(string& value, size_t sepPos, const string& line)
     value.erase(value.find_last_not_of("\t ") + 1);
 }
 
-bool CFileConfig::ParseLine(const string& line, size_t lineNo)
+void CFileConfig::ParseLine(const string& line, size_t lineNo)
 {
     if (line.find('=') == line.npos)
         CLog::Write(APC_LOG_FLAG_ERROR, "Config", "Couldn't find separator on line: %d", lineNo);
