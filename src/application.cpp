@@ -137,7 +137,7 @@ bool CApplication::Initialize(bool daemon)
     CLog::Write(APC_LOG_FLAG_INFO, "Application", "Log Opened");
 
     // Initialize the configuration store
-    string configFile = "/etc/agilepc/agilepcd.cnf";
+    string configFile = "/etc/agilepc/agilepc.cnf";
     CConfig::SetInterface(new CFileConfig(configFile.c_str()));
     
     // Check for new log-level from configuration file

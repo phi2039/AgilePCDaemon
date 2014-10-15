@@ -19,7 +19,7 @@ CSocketCommandService::~CSocketCommandService()
 bool CSocketCommandService::Initialize()
 {
     // Open the socket for communication
-    string socketPath = "/tmp/agilepcd";
+    string socketPath = "/tmp/agilepc";
     CConfig::GetOpt("cmd_local_file", socketPath); // Check for path override in config file
     
     m_pLocalSocket = new CServerSocket(socketPath);
