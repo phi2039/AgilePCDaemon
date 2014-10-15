@@ -44,7 +44,6 @@ public:
 class IConfig 
 {
 public:
-
     virtual ~IConfig() {}
     virtual bool Load() = 0;
     virtual bool Save() = 0;

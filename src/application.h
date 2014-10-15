@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "datamanager.h"
+#include "SocketCommandService.h"
 
 using namespace std;
 
@@ -41,6 +42,8 @@ protected:
     bool m_QuitFlag;
     // TEMP:
     CUploadMonitor* m_pUploads;
+    
+    CSocketCommandService* m_pSocketSvc;
 private:
 
 };

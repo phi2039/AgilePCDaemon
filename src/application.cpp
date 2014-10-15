@@ -105,7 +105,8 @@ int CUploadMonitor::GetDirectory(string dir, vector<string> &files)
 CApplication::CApplication() :
     m_pDataManager(NULL),
     m_pUploads(NULL),
-    m_QuitFlag(false)
+    m_QuitFlag(false),
+    m_pSocketSvc(NULL)
 {
 
 }
@@ -180,6 +181,9 @@ bool CApplication::Initialize(bool daemon)
     CLog::Write(APC_LOG_FLAG_INFO, "Application", "Monitoring upload directory: %s", loadPath.c_str());
 // ~TEMP
    
+    // Initialize command listener
+    m_pSocketSvc = new CSocketCommandService();
+    
     return true;
 }
 
@@ -191,6 +195,8 @@ void CApplication::ReloadConfig()
 // TODO: Implement simple path-handling class...
 int CApplication::Run()
 {
+    m_pSocketSvc->Start();
+    
     // Main application loop
     while (!m_QuitFlag)
     {

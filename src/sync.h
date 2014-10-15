@@ -8,15 +8,15 @@
 class CThreadSyncEvent
 {
 public:
-  CThreadSyncEvent();
-  virtual ~CThreadSyncEvent();
-  int Wait(int timeout = -1);
-  void Set();
-  void Reset();
+    CThreadSyncEvent();
+    virtual ~CThreadSyncEvent();
+    int Wait(int timeout = -1);
+    void Set();
+    void Reset();
 protected:
-  pthread_mutex_t m_Mutex;
-  pthread_cond_t m_Cond;
-  bool m_Signaled;
+    pthread_mutex_t m_Mutex;
+    pthread_cond_t m_Cond;
+    bool m_Signaled;
 };
 
 // Simple Mutex Wrapper
@@ -24,17 +24,17 @@ protected:
 class CMutexLock
 {
 public:
-  inline CMutexLock(pthread_mutex_t m) :
+    inline CMutexLock(pthread_mutex_t m) :
     m_Mutex(m)
-  {
-    pthread_mutex_lock(&m_Mutex);
-  }
-  inline ~CMutexLock()
-  {
-    pthread_mutex_unlock(&m_Mutex);  
-  }
+    {
+        pthread_mutex_lock(&m_Mutex);
+    }
+    inline ~CMutexLock()
+    {
+        pthread_mutex_unlock(&m_Mutex);  
+    }
 protected:
-  pthread_mutex_t m_Mutex;
+    pthread_mutex_t m_Mutex;
 };
 
 
