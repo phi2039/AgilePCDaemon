@@ -109,7 +109,7 @@ bool CLogBase::Open()
 
 void CLogBase::Write(int logLevel, const char* facility, const char* format, ...)
 {
-    // TODO: This never gets called...find a way around this...
+    // TODO: This never gets called (WriteV does)...find a way around this...
     if (m_Mask & logLevel)
     {
         CMutexLock lock(m_WriteMutex); // Block changes or other callers
@@ -157,6 +157,9 @@ void CFileLog::WriteV(int logLevel, const char* facility, const char* format, va
     if (!m_pFile)
         return;
     
+    // TODO: Move to base class
+    CMutexLock lock(m_WriteMutex); // Block changes or other callers
+
     fprintf(m_pFile, "%s::", facility);
     vfprintf(m_pFile, format, args);
     fprintf(m_pFile, "\n");
@@ -183,6 +186,9 @@ CConsoleLog::~CConsoleLog()
 
 void CConsoleLog::WriteV(int logLevel, const char* facility, const char* format, va_list args)
 {
+    // TODO: Move to base class
+    CMutexLock lock(m_WriteMutex); // Block changes or other callers
+
     printf("%s::", facility);
     vprintf(format, args);
     printf("\n");    
@@ -211,6 +217,9 @@ bool CSysLog::Open()
 
 void CSysLog::WriteV(int logLevel, const char* facility, const char* format, va_list args)
 {
+    // TODO: Move to base class
+    CMutexLock lock(m_WriteMutex); // Block changes or other callers
+
     // TODO: Do this more efficiently
     string newFormat;
     if (facility)

@@ -137,9 +137,11 @@ bool CServerSocket::Open(int queueLen /*=5*/)
             return false;        
     }   
     
-    // Set socket as passive listener
+    // Set socket as passive listener (and begin listening for connections)
     if (listen(m_Descriptor, queueLen) == -1)
         return false;
+
+    return true;
 }
 
 // TODO: Timeout and event

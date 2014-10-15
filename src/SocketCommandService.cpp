@@ -2,23 +2,39 @@
 
 #include "SocketCommandService.h"
 #include "logging.h"
+#include "config.h"
 
-CSocketCommandService::CSocketCommandService()
+CSocketCommandService::CSocketCommandService() :
+    m_pLocalSocket(NULL)
 {
     
 }
 
 CSocketCommandService::~CSocketCommandService()
 {
+    if (m_pLocalSocket)
+        delete m_pLocalSocket;
+}
+
+bool CSocketCommandService::Initialize()
+{
+    // Open the socket for communication
+    string socketPath = "/tmp/agilepcd";
+    CConfig::GetOpt("cmd_local_file", socketPath); // Check for path override in config file
     
+    m_pLocalSocket = new CServerSocket(socketPath);
+    if (!m_pLocalSocket->Open())
+    {
+        CLog::Write(APC_LOG_FLAG_ERROR, "SocketCommandService", "Failed to open server socket at %s", socketPath.c_str());
+        return false;
+    }
+
+    CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Listening on local socket at %s", socketPath.c_str());
+    return true;
 }
 
 int CSocketCommandService::Run()
 {
-    CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Starting Socket Command Service");
-    
-    // Open the socket for communication
-    
     // Listen for and service connections
     // TODO: There must be a better way to do this...
     while (true)
@@ -42,8 +58,17 @@ int CSocketCommandService::Run()
         if (m_QuitFlag)
           break;
 
-        CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Stopping Socket Command Service");
+    }
+    Shutdown();
+    return 0;
+}
 
-        return 0;
+void CSocketCommandService::Shutdown()
+{
+    // Clean up local socket, if it exists
+    if (m_pLocalSocket)
+    {
+        m_pLocalSocket->Close();
+        m_pLocalSocket = NULL;
     }
 }

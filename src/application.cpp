@@ -150,7 +150,8 @@ bool CApplication::Initialize(bool daemon)
         CLog::Write(APC_LOG_FLAG_ERROR, "Application", "Failed to initialize DataManager");
         return false;
     }
-    CLog::Write(APC_LOG_FLAG_INFO, "Application", "DataManager Started...");
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "DataManager Initialized");
+
     
 // TEMP: Initialize upload manager
     // TODO: Use more appropriate default values
@@ -178,11 +179,13 @@ bool CApplication::Initialize(bool daemon)
         return false;
     }    
     m_pUploads = new CUploadMonitor(loadPath, archivePath, tempPath, m_pDataManager);
-    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Monitoring upload directory: %s", loadPath.c_str());
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Upload Monitor Initialized. Monitoring upload directory: %s", loadPath.c_str());
 // ~TEMP
    
     // Initialize command listener
     m_pSocketSvc = new CSocketCommandService();
+    m_pSocketSvc->Initialize();
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Socket Control Service Initialized");
     
     return true;
 }
@@ -195,26 +198,41 @@ void CApplication::ReloadConfig()
 // TODO: Implement simple path-handling class...
 int CApplication::Run()
 {
+    // Start Services
+    // TODO: Run DM in thread?
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "DataManager Starting...");
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "DataManager Started");
+
+// TEMP
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Upload Monitor Starting...");
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Upload Monitor Started");
+ // ~TEMP 
+    
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Socket Command Service Starting...");
     m_pSocketSvc->Start();
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Socket Command Service Started");
     
     // Main application loop
     while (!m_QuitFlag)
     {
         // TEMP: Check for uploaded data files
+        // TODO: Put this in a service/thread
         if (!m_pUploads->CheckUploads())
             return 1; // This is all we do right now...no point hanging around...
         sleep(1); // Only poll once a second or so...
     }
-    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Exiting...");
-
-    // Clean up resources
+    
+     // Clean up services/resources
     Close();
     
+   CLog::Write(APC_LOG_FLAG_INFO, "Application", "Exiting...");
+
     return 0; // No Error
 }
 
 void CApplication::Close()
 {
+    CLog::Write(APC_LOG_FLAG_INFO, "Application", "Shutting down...");
     if (m_pDataManager)
     {
         delete m_pDataManager;
@@ -226,9 +244,17 @@ void CApplication::Close()
     {
         delete m_pUploads;
         m_pUploads = NULL;
-        CLog::Write(APC_LOG_FLAG_INFO, "Application", "No longer monitoring upload directory");
+        CLog::Write(APC_LOG_FLAG_INFO, "Application", "Upload Monitor Stopped");
     }
-    
+
+    if (m_pSocketSvc)
+    {
+        m_pSocketSvc->Stop();
+        delete m_pSocketSvc;
+        m_pSocketSvc = NULL;
+        CLog::Write(APC_LOG_FLAG_INFO, "Application", "Socket Command Service Stopped");
+    }    
+   
     // Last but not least
     CLog::Write(APC_LOG_FLAG_INFO, "Application", "Closing Log...");
     CLog::Close();
