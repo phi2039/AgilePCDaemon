@@ -1,8 +1,8 @@
-#include "application.h"
-
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
+
+#include "application.h"
 
 // Global application instance
 CApplication g_Application;

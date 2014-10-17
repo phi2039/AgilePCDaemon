@@ -11,6 +11,7 @@ public:
     virtual ~CThread() {}
     virtual bool Start();
     virtual void Stop();
+    virtual bool WaitComplete(int timeout = -1);
     virtual bool IsComplete();
 protected:
     virtual int Run() = 0;
@@ -18,9 +19,10 @@ protected:
     int m_Result;
     bool m_Complete;
     bool m_QuitFlag;
-    
 private:
     static void* StartProc(void* pParam);
+    void Complete();
+    CThreadSyncEvent m_QuitEvent;
 };
 
 #endif	/* THREAD_H */

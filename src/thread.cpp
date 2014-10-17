@@ -20,8 +20,19 @@ bool CThread::Start()
         return true;
     }
     CLog::Write(APC_LOG_FLAG_ERROR, "Thread", "Failed to start thread. Error: %d", status);
-    m_Complete = true; // Must be complete...even though nothing happened...
+    Complete(); // Must be complete...even though nothing happened...
     return false;
+}
+
+void CThread::Complete()
+{
+    m_Complete = true;
+    m_QuitEvent.Reset();
+}
+
+bool CThread::WaitComplete(int timeout /*=-1*/)
+{
+    m_QuitEvent.Wait(timeout);
 }
 
 bool CThread::IsComplete()
@@ -41,6 +52,7 @@ void* CThread::StartProc(void* pParam)
     CLog::Write(APC_LOG_FLAG_DEBUG, "Thread", "Thread exited with status %d", pThread->m_Result);
     pThread->m_ThreadId = 0;
     pThread->m_Complete = true;
+    pThread->m_QuitEvent.Set();
 }
 
 // TODO: Implement timeout/kill mechanism
@@ -53,6 +65,7 @@ void CThread::Stop()
     m_QuitFlag = true;
     // TODO: Trigger quit event
     
+    // TODO: Synchronize here to pervent access to threadID?
     void* pResult;
     pthread_join(m_ThreadId, NULL); // Wait for thread to complete
     

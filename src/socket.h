@@ -5,13 +5,35 @@
 
 using namespace std;
 
+enum
+{
+    SKT_SIGNAL_INTR = 1
+};
+enum
+{
+    APC_SOCKET_TIMEOUT_INF    = -1,
+    APC_SOCKET_TIMEOUT_NOWAIT = 0
+};
+
+enum
+{
+  APC_SOCKET_NOERR          = 0,
+  APC_SOCKET_SEND_ERROR     = -100,
+  APC_SOCKET_RCV_ERROR      = -101,
+  APC_SOCKET_NOT_CONN       = -102,
+  APC_SOCKET_INVALID_STATE  = -103,
+  APC_SOCKET_TIMEOUT        = -104
+};
+
 class CSocket
 {
 public:
     CSocket(int domain, int type, int protocol);
     CSocket(int desc);
     virtual ~CSocket();
+    int PollIn(int timeout);
     void Close();
+    void Shutdown();
 protected:
     int m_Descriptor;
 private:
@@ -23,8 +45,9 @@ public:
     CIOSocket(int domain, int type, int protocol);
     CIOSocket(int desc);
     virtual ~CIOSocket();
-    size_t Read(void* pBuf, size_t bufLen, unsigned int timeout /*, Event* pSignalEvent*/);
+    size_t Read(void* pBuf, size_t bufLen, int timeout = -1);
     size_t Write(void* pBuf, size_t bufLen);
+    int GetReadSize();
 protected:
 private:
 };
@@ -36,7 +59,7 @@ public:
     CServerSocket(const string& address, int port);
     virtual ~CServerSocket();
     bool Open(int queueLen = 5);
-    CIOSocket* Accept(unsigned int timeout /*, Event* pSignalEvent*/);
+    CIOSocket* Accept(int timeout = -1);
 protected:
     string m_Endpoint;
     int m_Port;

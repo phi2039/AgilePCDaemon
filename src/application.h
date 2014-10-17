@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "datamanager.h"
 #include "SocketCommandService.h"
+#include "datamanager.h"
 
 using namespace std;
 

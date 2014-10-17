@@ -15,14 +15,15 @@ CThreadSyncEvent::~CThreadSyncEvent()
   pthread_cond_destroy(&m_Cond);
 }
 
+//TODO: Implement timeout
 int CThreadSyncEvent::Wait(int timeout /*=-1*/)
 {
-  pthread_mutex_lock(&m_Mutex);
-  if (!m_Signaled)
-    pthread_cond_wait(&m_Cond, &m_Mutex);
-  pthread_mutex_unlock(&m_Mutex);
-  
-  return 0;
+    pthread_mutex_lock(&m_Mutex);
+    if (!m_Signaled)
+        pthread_cond_wait(&m_Cond, &m_Mutex);
+    pthread_mutex_unlock(&m_Mutex);
+
+    return 0;
 }
 
 void CThreadSyncEvent::Set()
