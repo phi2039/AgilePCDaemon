@@ -5,15 +5,20 @@
 #include "config.h"
 
 CSocketCommandService::CSocketCommandService() :
-m_pLocalSocket(NULL)
+//m_pLocalSocket(NULL)
+m_pSocketServer(NULL)
 {
 
 }
 
 CSocketCommandService::~CSocketCommandService()
 {
-    if (m_pLocalSocket)
-        delete m_pLocalSocket;
+    // TODO: Close()?
+//    if (m_pLocalSocket)
+//        delete m_pLocalSocket;
+    
+    if (m_pSocketServer)
+        delete m_pSocketServer;    
 }
 
 bool CSocketCommandService::Initialize()
@@ -22,13 +27,20 @@ bool CSocketCommandService::Initialize()
     string socketPath = "/tmp/agilepc";
     CConfig::GetOpt("cmd_local_file", socketPath); // Check for path override in config file
 
-    m_pLocalSocket = new CServerSocket(socketPath);
-    if (!m_pLocalSocket->Open())
+//    m_pLocalSocket = new CServerSocket(socketPath);
+//    if (!m_pLocalSocket->Open())
+//    {
+//        CLog::Write(APC_LOG_FLAG_ERROR, "SocketCommandService", "Failed to open local socket at %s", socketPath.c_str());
+//        return false;
+//    }
+
+    m_pSocketServer = new CMultiSocketServer();
+    if (!m_pSocketServer->Open(socketPath))
     {
-        CLog::Write(APC_LOG_FLAG_ERROR, "SocketCommandService", "Failed to open server socket at %s", socketPath.c_str());
+        CLog::Write(APC_LOG_FLAG_ERROR, "SocketCommandService", "Failed to open local socket at %s", socketPath.c_str());
         return false;
     }
-
+    
     CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Listening on local socket at %s", socketPath.c_str());
     return true;
 }
@@ -38,26 +50,31 @@ int CSocketCommandService::Run()
 {
     // Listen for and service connections
     // TODO: There must be a better way to do this...
+    list<CIOSocket*> clients;
     while (!m_QuitFlag)
     {
         // TODO: Use wait with timeout instead of sleep, so that we can trigger a speedier exit...
+        // TODO: Is this even necessary?
         sleep(1);
 
         // TODO: Wait on connection OR quit event
-        // TODO: Why can't we wait on this forever and have shutdown() kick us out???
-        CIOSocket* pClient = m_pLocalSocket->Accept(1000); // Wait forever...quit event will interrupt
-        if (pClient != NULL)
-        {
+//        CIOSocket* pClient = m_pLocalSocket->Accept(APC_SOCKET_TIMEOUT_INF); // Wait forever...quit event will interrupt
+        CIOSocket* pClient = m_pSocketServer->Accept(APC_SOCKET_TIMEOUT_INF); // Wait forever...quit event will interrupt
+        if (pClient)
+        {       
             CClientSession* pSession = new CClientSession(pClient, this);
-            pSession->Start();
-            
-            // TODO: Capture client in "open connections" list...
-            m_Clients.push(pSession);
+            AddClient(pSession);
         }
-        // TODO: Clean-up idle connections (THIS IS A MEMORY LEAK CURRENTLY!!!)
+        // TODO: Clean-up idle connections (THIS IS A RESOURCE LEAK CURRENTLY!!!)
     }
-    Shutdown();
     return 0;
+}
+
+bool CSocketCommandService::AddClient(CClientSession* pSession)
+{
+    m_Clients.push(pSession);
+    pSession->Start();
+    return true;
 }
 
 void CSocketCommandService::OnReceive(CPacketReader& reader)
@@ -74,32 +91,49 @@ void CSocketCommandService::OnReceive(CPacketReader& reader)
      // If response requested, register callback
 
      // If no response requested close connection
-
 }
 
-void CSocketCommandService::Shutdown()
+void CSocketCommandService::OnStop()
 {
-    // Clean up local socket, if it exists
-    if (m_pLocalSocket)
-    {
-        m_pLocalSocket->Shutdown();
-        m_pLocalSocket->Close();
-        delete m_pLocalSocket;
-        m_pLocalSocket = NULL;
-    }
+    CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Server thread stopping...");
+
+//    if (m_pLocalSocket)
+//       m_pLocalSocket->Shutdown(); // Unblock blocking I/O operations
+
+    // TODO: Shutdown THEN Close??
+    if (m_pSocketServer)
+       m_pSocketServer->CloseAll(); // Unblock blocking I/O operations and close sockets
+}
+
+void CSocketCommandService::Close()
+{
+    // TODO: Force Stop() first? 
+    // TODO: Add wait timeout?
+    if (!IsComplete())
+        Stop();
     
+    // TODO: Synchronize this? Yes...any time we manipulate the list, we need to sync it...
+    //...or do we? If there is only one "writer" and it is stopped...
     CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Disconnecting clients...");
+    int clientCount = 0;
     while (!m_Clients.empty())
     {
         // Clean up client connections
         CClientSession* pSession = m_Clients.front();
-        if (!pSession->IsComplete())
-        {
-            pSession->Stop();
-            CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Disconnected 1 client");
-        }
+        pSession->Close(); // This will Stop() and Close() the session
         m_Clients.pop();
+        delete pSession;
+        clientCount++;
     }
+    CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Disconnected %d client(s)", clientCount);
+}
+
+void CSocketCommandService::Shutdown()
+{
+    CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Shutting down...");
+    Stop();
+    Close();
+    CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Shut-down");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -155,7 +189,7 @@ int CClientSession::Run()
         return -1;
     }
     
-    CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Async receive thread started...");
+    CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Async receive thread started");
 
     // Poll the socket and process packets
     while (true)
@@ -170,7 +204,8 @@ int CClientSession::Run()
             if (result == APC_SOCKET_NOT_CONN) // Client disconnected
             {
                 CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Client disconnected");
-                delete this; // Self-destruct
+                // TODO: Can't really do this...
+                //delete this; // Self-destruct
                 break;
             }
             else
@@ -195,27 +230,28 @@ int CClientSession::Run()
             }
         }
     }
-    CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Async receive thread stopped...");
+    CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Async receive thread stopped");
     return 0;
 }
 
-// TODO: Is this sequence correct?
-void CClientSession::Stop()
+void CClientSession::OnStop()
 {
-    // TODO: Synchronize this??
-    
     CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Async receive thread stopping...");
-    m_QuitFlag = true; // Make sure this is set before unblocking poll() (so the polling loops exit...)
 
     if (m_pSocket)
-       m_pSocket->Shutdown();
+       m_pSocket->Shutdown(); // Unblock blocking I/O operations
+}
 
-    CThread::Stop(); // After this, no one will be using the socket
-    
+void CClientSession::Close()
+{
+    // TODO: Force Stop() first? 
+    // TODO: Add wait timeout?
+    if (!IsComplete())
+        Stop();
     if (m_pSocket)
     {
         m_pSocket->Close();
         delete m_pSocket;
         m_pSocket = NULL;
-    }
+    }    
 }

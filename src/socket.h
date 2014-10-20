@@ -2,6 +2,7 @@
 #define	SOCKET_H
 
 #include <string>
+#include <list>
 
 using namespace std;
 
@@ -22,7 +23,8 @@ enum
   APC_SOCKET_RCV_ERROR      = -101,
   APC_SOCKET_NOT_CONN       = -102,
   APC_SOCKET_INVALID_STATE  = -103,
-  APC_SOCKET_TIMEOUT        = -104
+  APC_SOCKET_TIMEOUT        = -104,
+  APC_SOCKET_INVARG         = -105
 };
 
 class CSocket
@@ -34,6 +36,8 @@ public:
     int PollIn(int timeout);
     void Close();
     void Shutdown();
+    operator int() {return m_Descriptor;}
+    int GetDescriptor() {return m_Descriptor;}
 protected:
     int m_Descriptor;
 private:
@@ -76,6 +80,23 @@ public:
 protected:
     string m_Endpoint;
     int m_Port;
+private:
+};
+
+class CMultiSocketServer
+{
+public:
+    CMultiSocketServer();
+    virtual ~CMultiSocketServer();
+    bool Open(const string& path, int queueLen = 5);
+    bool Open(const string& address, int port, int queueLen = 5);
+    void Close(int id);
+    void CloseAll();
+    CIOSocket* Accept(int timeout = -1);
+protected:
+    bool Open(CServerSocket* pSocket, int queueLen);
+    void Close(CServerSocket* pSocket);
+    list<CServerSocket*> m_Sockets;
 private:
 };
 

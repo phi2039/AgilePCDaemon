@@ -1,17 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="94">
+<configurationDescriptor version="95">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="src" name="0">
       <df name="ftp_dir">
       </df>
+      <in>SocketCommandService.cpp</in>
+      <in>SocketCommandService.h</in>
       <in>application.cpp</in>
       <in>application.h</in>
+      <in>config.cpp</in>
+      <in>config.h</in>
       <in>database.cpp</in>
       <in>database.h</in>
       <in>datamanager.cpp</in>
       <in>datamanager.h</in>
-      <in>dirent.h</in>
+      <in>logging.cpp</in>
+      <in>logging.h</in>
       <in>main.cpp</in>
+      <in>service.cpp</in>
+      <in>service.h</in>
+      <in>socket.cpp</in>
+      <in>socket.h</in>
+      <in>sync.cpp</in>
+      <in>sync.h</in>
+      <in>thread.cpp</in>
+      <in>thread.h</in>
     </df>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
@@ -84,6 +97,8 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
+        <gdb_signals>
+        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>

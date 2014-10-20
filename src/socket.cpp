@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,13 +48,14 @@ void CSocket::Shutdown()
     shutdown(m_Descriptor, SHUT_RD); // Unblock any poll() operations
 }
 
+// TODO: Should we set some sort of flag/event here that lets others know we are likely blocking?
 int CSocket::PollIn(int timeout)
 {
     int err = APC_SOCKET_NOERR;
 
     pollfd p;
     p.fd = m_Descriptor;
-    p.events = POLLIN; // There is data to read
+    p.events = POLLIN | POLLHUP; // There is data to read or the remote endpoint disconnected
     p.revents = 0; // Reset flags
 
     // Wait for data on the socket
@@ -168,7 +170,7 @@ bool CServerSocket::Open(int queueLen /*=5*/)
         return false;
 
     // Bind
-    // TODOL Helper functions for repeated code...
+    // TODO: Helper functions for repeated code...
     if (m_Port == -1) // Local socket
     {
         unlink(m_Endpoint.c_str()); // Clean up from prior instance, if necessary
@@ -202,7 +204,6 @@ bool CServerSocket::Open(int queueLen /*=5*/)
 }
 
 // TODO: Thread safety for interrupt events
-
 CIOSocket* CServerSocket::Accept(int timeout /*=-1*/)
 {
     if (!m_Descriptor)
@@ -273,4 +274,137 @@ bool CClientSocket::Connect()
             return false;
     }
     return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+// Multi-point Socket Server Class
+
+CMultiSocketServer::CMultiSocketServer()
+{
+    
+}
+
+CMultiSocketServer::~CMultiSocketServer()
+{
+    CloseAll();
+}
+
+bool CMultiSocketServer::Open(const string& path, int queueLen /*=5*/)
+{
+    CServerSocket* pSocket = new CServerSocket(path);
+    return Open(pSocket, queueLen);
+}
+
+bool CMultiSocketServer::Open(const string& address, int port, int queueLen /*=5*/)
+{
+    CServerSocket* pSocket = new CServerSocket(address, port);
+    return Open(pSocket, queueLen);   
+}
+
+bool CMultiSocketServer::Open(CServerSocket* pSocket, int queueLen)
+{
+    if (!pSocket)
+        return false;
+    
+    if (pSocket->Open(queueLen))
+    {
+        m_Sockets.push_back(pSocket); // Add to the list of open sockets
+        return true;
+    }
+    
+    delete pSocket;
+    return false;
+}
+
+CIOSocket* CMultiSocketServer::Accept(int timeout /*-1*/)
+{
+    // TODO: There is definitely a better way to do this...no need to rebuild these every time...
+    int socketCount = m_Sockets.size();
+    pollfd* pFd = (pollfd*)malloc(sizeof(pollfd) * socketCount);
+    for (list<CServerSocket*>::iterator it = m_Sockets.begin(); it != m_Sockets.end(); ++it)
+    {
+        pFd->fd = (int)(*(*it));
+        pFd->events = POLLIN;
+        pFd->revents = 0;
+    }
+    
+    CIOSocket* pResult = NULL;
+    
+    // Wait for data on any of the sockets
+    int result = poll(pFd, socketCount, timeout);
+    if (result == 0)
+        pResult = NULL;
+    else if (result == -1) // An error occurred in poll()
+        pResult = NULL;
+    else // There are events
+    {
+        // Loop through open descriptors and accept the first one found
+        // TODO: There is probably a better way to prioritize...but this is simplest...
+        for (int s = 0; s < socketCount; s++)
+        {
+            if (pFd[s].revents & POLLIN)
+            {
+                // TODO: What happens when an error occurs here?
+                int err = 0;
+                socklen_t errlen = sizeof (int); // Check for socket errors
+                getsockopt(pFd[s].fd, SOL_SOCKET, SO_ERROR, (void*) &err, &errlen);
+                if (!err)
+                {
+                    int clientDesc = accept(pFd[s].fd, NULL, 0);
+                    if (clientDesc > 0)
+                    {
+                        pResult = new CIOSocket(clientDesc);
+                        break;
+                    }
+                }
+            }
+            pResult = NULL;
+        }
+    }
+    free(pFd);
+    return pResult;
+}
+
+// TODO: Synchronize list operations?
+void CMultiSocketServer::Close(int id)
+{
+    // Find the descriptor in the open socket list
+    CServerSocket* pSocket = NULL;
+    for (list<CServerSocket*>::iterator it = m_Sockets.begin(); it != m_Sockets.end(); ++it)
+    {
+        int desc = (int)(*(*it));
+        if (desc == id)
+        {
+            pSocket = *it;
+            m_Sockets.erase(it);
+            break;
+        }
+    }
+    
+    // Do this outside loop to prevent any problems with iterator
+    if (pSocket)
+    {
+        Close(pSocket);
+        delete pSocket;
+    }
+}
+
+void CMultiSocketServer::Close(CServerSocket* pSocket)
+{
+    if (pSocket)
+    {
+        pSocket->Shutdown(); // Unblock
+        pSocket->Close(); // Close descriptor
+    }
+}
+
+void CMultiSocketServer::CloseAll()
+{
+    while (!m_Sockets.empty())
+    {
+        CServerSocket* pSocket = m_Sockets.front();
+        Close(pSocket);
+        m_Sockets.pop_front();
+        delete pSocket;
+    }    
 }

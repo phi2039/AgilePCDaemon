@@ -249,7 +249,7 @@ void CApplication::Close()
 
     if (m_pSocketSvc)
     {
-        m_pSocketSvc->Stop();
+        m_pSocketSvc->Shutdown();
         delete m_pSocketSvc;
         m_pSocketSvc = NULL;
         CLog::Write(APC_LOG_FLAG_INFO, "Application", "Socket Command Service Stopped");

@@ -33,9 +33,12 @@ class CClientSession : public CThread
 public:
     CClientSession(CIOSocket* pSocket, IClientCallback* pCallback);
     virtual ~CClientSession();
-    virtual void Stop();
+    virtual void Close();
 protected:
+// CThread Methods    
     virtual int Run();
+    virtual void OnStop();    
+// Local Implementation    
     CIOSocket* m_pSocket;
     IClientCallback* m_pCallback;
 private:
@@ -47,12 +50,20 @@ public:
     CSocketCommandService();
     virtual ~CSocketCommandService();
     virtual bool Initialize();
+    virtual void Shutdown();
+// IClientCallback Overrides    
     void OnReceive(CPacketReader& reader);
 protected:
+// CThread Overrides
     virtual int Run();
-    virtual void Shutdown();
-    CServerSocket* m_pLocalSocket;
+    virtual void OnStop();
+// Local Implementation
+    virtual bool AddClient(CClientSession* pSession);
+    virtual void Close();
+    //CServerSocket* m_pLocalSocket;
     queue<CClientSession*> m_Clients;
+    
+    CMultiSocketServer* m_pSocketServer;
 private:
 
 };
