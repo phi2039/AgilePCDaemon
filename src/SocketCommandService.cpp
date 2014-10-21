@@ -5,7 +5,6 @@
 #include "config.h"
 
 CSocketCommandService::CSocketCommandService() :
-//m_pLocalSocket(NULL)
 m_pSocketServer(NULL)
 {
 
@@ -14,9 +13,6 @@ m_pSocketServer(NULL)
 CSocketCommandService::~CSocketCommandService()
 {
     // TODO: Close()?
-//    if (m_pLocalSocket)
-//        delete m_pLocalSocket;
-    
     if (m_pSocketServer)
         delete m_pSocketServer;    
 }
@@ -26,13 +22,6 @@ bool CSocketCommandService::Initialize()
     // Open the socket for communication
     string socketPath = "/tmp/agilepc";
     CConfig::GetOpt("cmd_local_file", socketPath); // Check for path override in config file
-
-//    m_pLocalSocket = new CServerSocket(socketPath);
-//    if (!m_pLocalSocket->Open())
-//    {
-//        CLog::Write(APC_LOG_FLAG_ERROR, "SocketCommandService", "Failed to open local socket at %s", socketPath.c_str());
-//        return false;
-//    }
 
     m_pSocketServer = new CMultiSocketServer();
     if (!m_pSocketServer->Open(socketPath))
@@ -48,9 +37,7 @@ bool CSocketCommandService::Initialize()
 // socat - UNIX-CONNECT:/tmp/agilepc
 int CSocketCommandService::Run()
 {
-    // Listen for and service connections
-    // TODO: There must be a better way to do this...
-    list<CIOSocket*> clients;
+    // Listen for and service connection requests
     while (!m_QuitFlag)
     {
         // TODO: Use wait with timeout instead of sleep, so that we can trigger a speedier exit...
@@ -58,14 +45,13 @@ int CSocketCommandService::Run()
         sleep(1);
 
         // TODO: Wait on connection OR quit event
-//        CIOSocket* pClient = m_pLocalSocket->Accept(APC_SOCKET_TIMEOUT_INF); // Wait forever...quit event will interrupt
         CIOSocket* pClient = m_pSocketServer->Accept(APC_SOCKET_TIMEOUT_INF); // Wait forever...quit event will interrupt
         if (pClient)
         {       
             CClientSession* pSession = new CClientSession(pClient, this);
             AddClient(pSession);
         }
-        // TODO: Clean-up idle connections (THIS IS A RESOURCE LEAK CURRENTLY!!!)
+        // TODO: Close() and delete idle/closed/inactive connections (THIS IS A RESOURCE LEAK CURRENTLY!!!)
     }
     return 0;
 }
@@ -97,12 +83,12 @@ void CSocketCommandService::OnStop()
 {
     CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Server thread stopping...");
 
-//    if (m_pLocalSocket)
-//       m_pLocalSocket->Shutdown(); // Unblock blocking I/O operations
-
-    // TODO: Shutdown THEN Close??
+    // TODO: Shutdown THEN Close?? We may have problems if we close() the sockets while another thread is in recv() or accept()
     if (m_pSocketServer)
-       m_pSocketServer->CloseAll(); // Unblock blocking I/O operations and close sockets
+    {
+        m_pSocketServer->ShutdownAll();
+        m_pSocketServer->CloseAll(); // Unblock blocking I/O operations and close sockets
+    }
 }
 
 void CSocketCommandService::Close()
@@ -120,7 +106,7 @@ void CSocketCommandService::Close()
     {
         // Clean up client connections
         CClientSession* pSession = m_Clients.front();
-        pSession->Close(); // This will Stop() and Close() the session
+        pSession->Close(); // This will Stop() the client thread AND Close() the session/socket
         m_Clients.pop();
         delete pSession;
         clientCount++;
@@ -131,8 +117,8 @@ void CSocketCommandService::Close()
 void CSocketCommandService::Shutdown()
 {
     CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Shutting down...");
-    Stop();
-    Close();
+    Stop(); // Stop worker thread
+    Close(); // Cleanup resources
     CLog::Write(APC_LOG_FLAG_INFO, "SocketCommandService", "Shut-down");
 }
 
@@ -177,6 +163,7 @@ CClientSession::CClientSession(CIOSocket* pSocket, IClientCallback* pCallback) :
 
 CClientSession::~CClientSession()
 {
+    // TODO: Throw an exception if the thread is still running?? At least we'd know why the process died...otherwise it could just squash other memory and do bad things...
     if (m_pSocket)
         delete m_pSocket; // We're responsible for disposing of the provided connection
 }
@@ -191,7 +178,7 @@ int CClientSession::Run()
     
     CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Async receive thread started");
 
-    // Poll the socket and process packets
+    // Poll the socket and process requests
     while (true)
     {
         if (m_QuitFlag) // shutdown() will unblock any open requests, so this should be sufficient for quitting
@@ -204,14 +191,12 @@ int CClientSession::Run()
             if (result == APC_SOCKET_NOT_CONN) // Client disconnected
             {
                 CLog::Write(APC_LOG_FLAG_INFO, "ClientSession", "Client disconnected");
-                // TODO: Can't really do this...
-                //delete this; // Self-destruct
-                break;
+                break; // We are now "shutdown"
             }
             else
             {
                 CLog::Write(APC_LOG_FLAG_ERROR, "ClientSession", "Receive thread error while polling. Result: %d", result);
-                continue; // TODO: try to repair the problem, or bail...
+                continue; // TODO: try to repair the problem or bail...?
             }
         }
         else // Data to read
@@ -244,14 +229,10 @@ void CClientSession::OnStop()
 
 void CClientSession::Close()
 {
-    // TODO: Force Stop() first? 
+    // TODO: Force Stop() first? If this gets called from the worker thread, we get a deadlock...I think...
     // TODO: Add wait timeout?
     if (!IsComplete())
-        Stop();
+        Stop(); // TODO: Or just return??? Probably not good...
     if (m_pSocket)
-    {
         m_pSocket->Close();
-        delete m_pSocket;
-        m_pSocket = NULL;
-    }    
 }

@@ -2,7 +2,7 @@
 #define	SOCKET_H
 
 #include <string>
-#include <list>
+#include <map>
 
 using namespace std;
 
@@ -59,15 +59,36 @@ private:
 class CServerSocket : public CSocket
 {
 public:
-    CServerSocket(const string& path);
-    CServerSocket(const string& address, int port);
+    CServerSocket(int domain, int type, int protocol);
     virtual ~CServerSocket();
-    bool Open(int queueLen = 5);
+    virtual bool Open(int queueLen = 5) = 0;
     CIOSocket* Accept(int timeout = -1);
+    const string& GetEndpoint() {return m_Endpoint;}
 protected:
+    bool Listen(int queueLen);
     string m_Endpoint;
-    int m_Port;
 private:
+};
+
+class CTcpServerSocket : public CServerSocket
+{
+public:
+    CTcpServerSocket(const string& host, int port);
+    virtual ~CTcpServerSocket();
+    virtual bool Open(int queueLen = 5);
+protected:
+    string m_Host;
+    int m_Port;
+};
+
+class CLocalServerSocket : public CServerSocket
+{
+public:
+    CLocalServerSocket(const string& path);    
+    virtual ~CLocalServerSocket();    
+    virtual bool Open(int queueLen = 5);
+protected:
+    string m_Path;
 };
 
 class CClientSocket : public CIOSocket
@@ -83,20 +104,33 @@ protected:
 private:
 };
 
+typedef map<string, CServerSocket*> ServerSocketMap;
+typedef ServerSocketMap::iterator ServerSocketIterator;
+
+enum
+{
+    APC_ENDPOINT_LOCAL = 1,
+    APC_ENDPOINT_INET  = 2
+};
+
 class CMultiSocketServer
 {
 public:
     CMultiSocketServer();
     virtual ~CMultiSocketServer();
+    // TODO: Use type and endpoint string...
     bool Open(const string& path, int queueLen = 5);
     bool Open(const string& address, int port, int queueLen = 5);
-    void Close(int id);
+    // TODO: Close by type?
+    void Close(const string& endpoint);
     void CloseAll();
+    void Shutdown(const string& endpoint);
+    void ShutdownAll();
     CIOSocket* Accept(int timeout = -1);
 protected:
     bool Open(CServerSocket* pSocket, int queueLen);
-    void Close(CServerSocket* pSocket);
-    list<CServerSocket*> m_Sockets;
+    CServerSocket* FindSocket(const string& endpoint);
+    ServerSocketMap m_Sockets;
 private:
 };
 

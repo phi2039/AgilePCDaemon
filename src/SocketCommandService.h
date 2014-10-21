@@ -60,7 +60,6 @@ protected:
 // Local Implementation
     virtual bool AddClient(CClientSession* pSession);
     virtual void Close();
-    //CServerSocket* m_pLocalSocket;
     queue<CClientSession*> m_Clients;
     
     CMultiSocketServer* m_pSocketServer;
