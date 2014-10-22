@@ -40,10 +40,6 @@ int CSocketCommandService::Run()
     // Listen for and service connection requests
     while (!m_QuitFlag)
     {
-        // TODO: Use wait with timeout instead of sleep, so that we can trigger a speedier exit...
-        // TODO: Is this even necessary?
-        sleep(1);
-
         // TODO: Wait on connection OR quit event
         CIOSocket* pClient = m_pSocketServer->Accept(APC_SOCKET_TIMEOUT_INF); // Wait forever...quit event will interrupt
         if (pClient)
@@ -51,7 +47,7 @@ int CSocketCommandService::Run()
             CClientSession* pSession = new CClientSession(pClient, this);
             AddClient(pSession);
         }
-        // TODO: Close() and delete idle/closed/inactive connections (THIS IS A RESOURCE LEAK CURRENTLY!!!)
+        // TODO: Close() and delete idle/closed/inactive connections periodically (THIS IS A RESOURCE LEAK CURRENTLY!!!)
     }
     return 0;
 }
